@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Node:
     def __init__(self):
+        self.parents = set()
         self.children = set()
 
 

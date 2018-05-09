@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from os.path import exists, join, basename
 from urllib.parse import urlparse
 
-from quark.utils import mkdir, load_conf, freeze_file
+from quark.utils import mkdir, load_conf, freeze_file, dependency_file
 from .subproject import Subproject
 
 
@@ -27,12 +27,15 @@ def checkout():
         mod = modules.setdefault(name, newmodule)
         res = None
         if mod is newmodule:
+            mod.parents.add(parent)
             mod.checkout()
             res = mod
         else:
             if not mod.same_checkout(newmodule):
                 raise ValueError(
-                    "Conflicting URLs for module '%s': '%s' and '%s'" % (name, mod.urlstring, newmodule.urlstring))
+                    "Conflicting URLs for module '%s': '%s' required by %s and '%s' required by '%s'" % (name,
+                    mod.urlstring, [join(parent.directory, dependency_file) for parent in mod.parents],
+                    newmodule.urlstring, join(parent.directory, dependency_file)))
         parent.children.add(mod)
         return res
 
