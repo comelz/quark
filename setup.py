@@ -8,13 +8,13 @@ def read(fname):
 
 config = {
     'name': "quark",
-    'version': "0.5",
+    'version': "0.1",
     'author': "Walter Oggioni",
     'author_email': "oggioni.walter@gmail.com",
     'description': ("Meson dependency management plugin"),
     'long_description': '',
     'license': "MIT",
-    'keywords': "cmake",
+    'keywords': "build",
     'url': "https://github.com/comelz/czmake",
     'packages': ['quark'],
     'include_package_data': True,
@@ -30,5 +30,12 @@ config = {
         'Topic :: Software Development :: Version Control',
         'Topic :: Utilities'
     ],
+    "entry_points": {
+        'console_scripts': [
+            'quark=quark.cli:main',
+            'quark-checkout=quark.checkout:checkout',
+            'quark-freeze=quark.freeze:freeze',
+        ],
+    }
 }
 setup(**config)

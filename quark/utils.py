@@ -1,15 +1,26 @@
 import sys
 import os
-import os.path
+import os.path as path
 import subprocess
 import argparse
 import hashlib
+import json
 
 cache_file = os.path.join('quark', 'quark_cache.json')
-dependency_file = 'quark_deps.json'
+dependency_file = 'subprojects.quark'
+freeze_file = 'freeze.quark'
 
 
-def walkTree(root, callback):
+def load_conf(folder):
+    filepath = path.join(folder, dependency_file)
+    if path.exists(filepath):
+        with open(path.join(folder, dependency_file), 'r') as f:
+            return json.load(f)
+    else:
+        return None
+
+
+def walk_tree(root, callback):
     class StackElement:
         def __init__(self, node):
             self.node = node
