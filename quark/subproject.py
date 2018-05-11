@@ -31,28 +31,32 @@ class Subproject(Node):
         return res
 
     @staticmethod
-    def create(name, urlstring, directory):
+    def create(name, urlstring, directory, options, **kwargs):
+        if not urlstring:
+            return Subproject(name, directory, options, **kwargs)
         url = urlparse(urlstring)
-        args = (name, url, directory)
+        args = (name, url, directory, options)
         if url.scheme.startswith('git'):
-            res = GitSubproject(*args)
+            res = GitSubproject(*args, **kwargs)
         elif url.scheme.startswith('svn'):
-            res = SvnSubproject(*args)
+            res = SvnSubproject(*args, **kwargs)
         else:
             raise ValueError("Unrecognized dependency for url '%s'", urlstring)
         res.urlstring = urlstring
         return res
 
-    def __init__(self, name=None, directory=None):
+    def __init__(self, name=None, directory=None, options=None, exclude_from_cmake=False):
         super().__init__()
         self.name = name
         self.directory = directory
+        self.options = options or {}
+        self.exclude_from_cmake = exclude_from_cmake
 
     def __hash__(self):
         return self.name.__hash__()
 
     def same_checkout(self, other):
-        raise NotImplementedError()
+        return True
 
     def checkout(self):
         raise NotImplementedError()
@@ -66,10 +70,17 @@ class Subproject(Node):
     def url_from_checkout(self):
         raise NotImplementedError()
 
+    def toJSON(self):
+        return {
+            "name": self.name,
+            "children": [child.toJSON() for child in self.children],
+            "options": self.options,
+        }
+
 
 class GitSubproject(Subproject):
-    def __init__(self, name, url, directory):
-        super().__init__(name, directory)
+    def __init__(self, name, url, directory, options, **kwargs):
+        super().__init__(name, directory, options, **kwargs)
         self.ref = 'origin/HEAD'
         if url.fragment:
             fragment = Subproject._parse_fragment(url)
@@ -104,11 +115,11 @@ class GitSubproject(Subproject):
     def checkout(self):
         if not exists(self.directory):
             fork(['git', 'clone', self.url.geturl(), self.directory])
-        elif self.has_local_edit():
-            logger.warning("Directory '%s' contains local modifications" % self.directory)
-        with DirectoryContext(self.directory):
-            fork(['git', 'fetch'])
-            fork(['git', 'checkout', self.ref])
+        else:
+            if self.has_local_edit():
+                logger.warning("Directory '%s' contains local modifications" % self.directory)
+            else:
+                self.update()
 
     def update(self):
         with DirectoryContext(self.directory):
@@ -131,8 +142,8 @@ class GitSubproject(Subproject):
 
 
 class SvnSubproject(Subproject):
-    def __init__(self, name, url, directory):
-        super().__init__(name, directory)
+    def __init__(self, name, url, directory, options, **kwargs):
+        super().__init__(name, directory, options, **kwargs)
         self.rev = 'HEAD'
         fragment = (url.fragment and Subproject._parse_fragment(url)) or {}
         rev = fragment.get('rev', None)
@@ -157,11 +168,12 @@ class SvnSubproject(Subproject):
     def checkout(self):
         if not exists(self.directory):
             fork(['svn', 'checkout', self.url.geturl(), self.directory])
-        elif self.has_local_edit():
-            logger.warning("Directory '%s' contains local modifications" % self.directory)
         else:
-            with DirectoryContext(self.directory):
-                fork(['svn', 'switch', self.url.geturl()])
+            if self.has_local_edit():
+                logger.warning("Directory '%s' contains local modifications" % self.directory)
+            else:
+                with DirectoryContext(self.directory):
+                    fork(['svn', 'switch', self.url.geturl()])
 
     def update(self):
         with DirectoryContext(self.directory):
@@ -176,6 +188,7 @@ class SvnSubproject(Subproject):
         return False
 
     def url_from_checkout(self):
-        with SubprocessContext(['svn', 'info', '--xml', self.directory], universal_newlines=True, stdout=PIPE, check=True) as pipe:
+        with SubprocessContext(['svn', 'info', '--xml', self.directory], universal_newlines=True, stdout=PIPE,
+                               check=True) as pipe:
             doc = etree.parse(pipe.stdout)
         return doc.xpath('/info/entry/url')[0].text + "@" + doc.xpath('/info/entry/commit')[0].get('revision')

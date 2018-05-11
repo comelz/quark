@@ -34,6 +34,9 @@ config = {
         'console_scripts': [
             'quark=quark.cli:main',
             'quark-checkout=quark.checkout:checkout',
+            'quark-co=quark.checkout:checkout',
+            'quark-update=quark.checkout:update',
+            'quark-up=quark.checkout:update',
             'quark-freeze=quark.freeze:freeze',
         ],
     }
