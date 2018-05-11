@@ -4,7 +4,7 @@ from shutil import rmtree
 from subprocess import check_output, call, PIPE
 from urllib.parse import urlparse
 
-from lxml import etree
+import xml.etree.ElementTree as ElementTree
 
 from quark.utils import DirectoryContext, fork, SubprocessContext
 
@@ -182,13 +182,13 @@ class SvnSubproject(Subproject):
     def has_local_edit(self):
         with SubprocessContext(['svn', 'st', '--xml', self.directory], universal_newlines=True, stdout=PIPE,
                                check=True) as pipe:
-            doc = etree.parse(pipe.stdout)
-        for entry in doc.xpath('/status/target/entry[@path="%s"]/entry[@item="modified"]' % self.directory):
+            doc = ElementTree.parse(pipe.stdout)
+        for entry in doc.findall('./status/target/entry[@path="%s"]/entry[@item="modified"]' % self.directory):
             return True
         return False
 
     def url_from_checkout(self):
         with SubprocessContext(['svn', 'info', '--xml', self.directory], universal_newlines=True, stdout=PIPE,
                                check=True) as pipe:
-            doc = etree.parse(pipe.stdout)
-        return doc.xpath('/info/entry/url')[0].text + "@" + doc.xpath('/info/entry/commit')[0].get('revision')
+            doc = ElementTree.parse(pipe.stdout)
+        return doc.findall('./info/entry/url')[0].text + "@" + doc.xpath('/info/entry/commit')[0].get('revision')
