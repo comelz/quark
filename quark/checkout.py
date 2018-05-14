@@ -1,7 +1,7 @@
 import json
 import os
 from argparse import ArgumentParser
-from os.path import exists, join, basename
+from os.path import exists, join, basename, abspath
 from urllib.parse import urlparse
 
 from quark.utils import mkdir, load_conf, freeze_file, dependency_file, walk_tree
@@ -18,7 +18,7 @@ def checkout():
                         help="Print dependency tree in JSON format")
     optlist = parser.parse_args()
     url = optlist.url
-    source_dir = optlist.source_directory or (optlist.url and basename(urlparse(optlist.url).path)) or os.getcwd()
+    source_dir = abspath(optlist.source_directory or (optlist.url and basename(urlparse(optlist.url).path)) or os.getcwd())
     resolve_dependencies(source_dir, url, print_tree=optlist.verbose)
 
 def update():

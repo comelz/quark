@@ -99,7 +99,7 @@ class GitSubproject(Subproject):
 
     def check_origin(self):
         with DirectoryContext(self.directory):
-            if check_output(['git', 'config', '--get', 'remote.origin.url']) != self.checkout_directory:
+            if check_output(['git', 'config', '--get', 'remote.origin.url']) != self.url:
                 if not self.has_local_edit():
                     logger.warning("%s is not a clone of %s "
                                    "but it hasn't local modifications, "
