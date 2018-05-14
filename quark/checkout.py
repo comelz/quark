@@ -34,10 +34,10 @@ def update():
 def resolve_dependencies(source_dir, url=None, options=None, print_tree=False):
     subproject_dir = join(source_dir, 'lib')
     if url:
-        root = Subproject.create(basename(source_dir), url, source_dir, options or {})
+        root = Subproject.create(None, url, source_dir, options or {})
         root.checkout()
     else:
-        root = Subproject(directory=os.getcwd(), options=options or {})
+        root = Subproject(directory=source_dir, options=options or {})
     stack = [root]
     modules = {}
 
