@@ -61,6 +61,13 @@ def resolve_dependencies(source_dir, url=None, options=None, print_tree=False):
             mod.checkout()
             stack.append(mod)
         else:
+            if newmodule.exclude_from_cmake != mod.exclude_from_cmake:
+                children = [join(parent.directory, dependency_file) for parent in mod.parents]
+                parent = join(parent.directory, dependency_file)
+                raise ValueError("Conflicting value of 'exclude_from_cmake'"
+                     " attribute for module '%s': '%s' required by %s and %s required by %s" %
+                     (name, str(mod.exclude_from_cmake), children, str(parent.exclude_from_cmake), parent)
+                )
             if not newmodule.same_checkout(mod):
                 children = [join(parent.directory, dependency_file) for parent in mod.parents]
                 parent = join(parent.directory, dependency_file)
