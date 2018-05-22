@@ -55,6 +55,7 @@ def update_dict(original, updated):
 
 def fork(*args, **kwargs):
     sys.stdout.write(' '.join(args[0]) + '\n')
+    sys.stdout.flush()
     return subprocess.check_call(*args, **kwargs)
 
 

@@ -1,4 +1,5 @@
 import logging
+import json
 from os.path import exists, join
 from shutil import rmtree
 from subprocess import check_output, call, PIPE
@@ -7,6 +8,7 @@ from urllib.parse import urlparse
 import xml.etree.ElementTree as ElementTree
 
 from quark.utils import DirectoryContext, fork, SubprocessContext
+from quark.utils import freeze_file, dependency_file, mkdir, load_conf, walk_tree
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +47,105 @@ class Subproject(Node):
         res.urlstring = urlstring
         return res
 
-    def __init__(self, name=None, directory=None, options=None, exclude_from_cmake=False):
+    @staticmethod
+    def create_dependency_tree(source_dir, url=None, options=None, update=False):
+        subproject_dir = join(source_dir, 'lib')
+        if url:
+            root = Subproject.create(None, url, source_dir, options or {})
+            root.checkout()
+        else:
+            root = Subproject(directory=source_dir, options=options or {})
+        stack = [root]
+        modules = {}
+
+        def get_option(key):
+            try:
+                return root.options[key]
+            except KeyError as e:
+                err = e
+            for module in modules.values():
+                try:
+                    return module.options[key]
+                except KeyError as e:
+                    err = e
+            raise err
+
+        def add_module(parent, name, uri, options, **kwargs):
+            newmodule = Subproject.create(name, uri, join(subproject_dir, name), options, **kwargs)
+            mod = modules.setdefault(name, newmodule)
+            if mod is newmodule:
+                mod.parents.add(parent)
+                if update:
+                    mod.update()
+                stack.append(mod)
+            else:
+                if newmodule.exclude_from_cmake != mod.exclude_from_cmake:
+                    children_conf = [join(parent.directory, dependency_file) for parent in mod.parents]
+                    parent_conf = join(parent.directory, dependency_file)
+                    raise ValueError("Conflicting value of 'exclude_from_cmake'"
+                                     " attribute for module '%s': '%s' required by %s and %s required by %s" %
+                                     (name, str(mod.exclude_from_cmake), children_conf, str(parent.exclude_from_cmake),
+                                      parent_conf)
+                                     )
+                if not newmodule.same_checkout(mod):
+                    children = [join(parent.directory, dependency_file) for parent in mod.parents]
+                    parent = join(parent.directory, dependency_file)
+                    raise ValueError(
+                        "Conflicting URLs for module '%s': '%s' required by %s and '%s' required by '%s'" %
+                        (name,
+                         mod.urlstring, children,
+                         newmodule.urlstring, parent))
+
+                else:
+                    for key, value in options.items():
+                        mod.options.setdefault(key, value)
+                        if mod.options[key] != value:
+                            raise ValueError(
+                                "Conflicting values option '%s' of module '%s'" % (key, mod.name)
+                            )
+            parent.children.add(mod)
+
+        freeze_conf = join(root.directory, freeze_file)
+        if exists(freeze_conf):
+            with open(freeze_conf, 'r') as f:
+                freeze_dict = json.load(f)
+        else:
+            freeze_dict = {}
+        mkdir(subproject_dir)
+        while len(stack):
+            current_module = stack.pop()
+            if current_module.external_project:
+                fork([sys.executable, '-m', ''])
+            conf = load_conf(current_module.directory)
+            if conf:
+                for name, depobject in conf.get('depends', {}).items():
+                    add_module(current_module, name,
+                               freeze_dict.get(name, depobject.get('url', None)), depobject.get('options', {}),
+                               exclude_from_cmake=depobject.get('exclude_from_cmake', False),
+                               external_project=depobject.get('external_project', False)
+                               )
+                for key, optobjects in conf.get('optdepends', {}).items():
+                    if isinstance(optobjects, dict):
+                        optobjects = [optobjects]
+                    for optobject in optobjects:
+                        try:
+                            value = get_option(key)
+                        except KeyError:
+                            continue
+                        if value == optobject['value']:
+                            for name, depobject in optobject['depends'].items():
+                                add_module(current_module, name,
+                                           freeze_dict.get(name, depobject.get('url', None)),
+                                           depobject.get('options', {}))
+        return root, modules
+
+    def __init__(self, name=None, directory=None, options=None, exclude_from_cmake=False, external_project=False):
         super().__init__()
         self.name = name
         self.directory = directory
         self.options = options or {}
         self.exclude_from_cmake = exclude_from_cmake
+        self.external_project = external_project
 
     def __hash__(self):
         return self.name.__hash__()
@@ -113,18 +208,17 @@ class GitSubproject(Subproject):
                         self.directory, self.url.geturl())
 
     def checkout(self):
-        if not exists(self.directory):
-            fork(['git', 'clone', self.url.geturl(), self.directory])
-        else:
-            if self.has_local_edit():
-                logger.warning("Directory '%s' contains local modifications" % self.directory)
-            else:
-                self.update()
+        fork(['git', 'clone', self.url.geturl(), self.directory])
 
     def update(self):
-        with DirectoryContext(self.directory):
-            fork(['git', 'fetch'])
-            fork(['git', 'checkout', self.ref])
+        if not exists(self.directory):
+            self.checkout()
+        elif self.has_local_edit():
+            logger.warning("Directory '%s' contains local modifications" % self.directory)
+        else:
+            with DirectoryContext(self.directory):
+                fork(['git', 'fetch'])
+                fork(['git', 'checkout', self.ref])
 
     def has_local_edit(self):
         with DirectoryContext(self.directory):
@@ -136,8 +230,12 @@ class GitSubproject(Subproject):
 
     def url_from_checkout(self):
         with DirectoryContext(self.directory):
-            origin = call(['git', 'remote', 'get-url', 'origin'], universal_newlines=True, stdout=PIPE)
-            commit = call(['git', 'log', '-1', '--format=%H'], universal_newlines=True, stdout=PIPE)
+            with SubprocessContext(['git', 'remote', 'get-url', 'origin'], universal_newlines=True, stdout=PIPE,
+                                   check=True) as pipe:
+                origin = pipe.stdout.read()[:-1]
+            with SubprocessContext(['git', 'log', '-1', '--format=%H'], universal_newlines=True, stdout=PIPE,
+                                   check=True) as pipe:
+                commit = pipe.stdout.read()[:-1]
         return 'git+%s#commit=%s' % (origin, commit)
 
 
@@ -166,18 +264,17 @@ class SvnSubproject(Subproject):
         return False
 
     def checkout(self):
-        if not exists(self.directory):
-            fork(['svn', 'checkout', self.url.geturl(), self.directory])
-        else:
-            if self.has_local_edit():
-                logger.warning("Directory '%s' contains local modifications" % self.directory)
-            else:
-                with DirectoryContext(self.directory):
-                    fork(['svn', 'switch', self.url.geturl()])
+        fork(['svn', 'checkout', self.url.geturl(), self.directory])
 
     def update(self):
-        with DirectoryContext(self.directory):
-            fork(['svn', 'up', '-r', self.rev])
+        if not exists(self.directory):
+            self.checkout()
+        elif self.has_local_edit():
+            logger.warning("Directory '%s' contains local modifications" % self.directory)
+        else:
+            with DirectoryContext(self.directory):
+                fork(['svn', 'switch', self.url.geturl()])
+                # fork(['svn', 'up', '-r', self.rev])
 
     def has_local_edit(self):
         with SubprocessContext(['svn', 'st', '--xml', self.directory], universal_newlines=True, stdout=PIPE,
@@ -191,4 +288,32 @@ class SvnSubproject(Subproject):
         with SubprocessContext(['svn', 'info', '--xml', self.directory], universal_newlines=True, stdout=PIPE,
                                check=True) as pipe:
             doc = ElementTree.parse(pipe.stdout)
-        return doc.findall('./info/entry/url')[0].text + "@" + doc.xpath('/info/entry/commit')[0].get('revision')
+        return doc.findall('./entry/url')[0].text + "@" + doc.findall('./entry/commit')[0].get('revision')
+
+
+def generate_cmake_script(source_dir, url=None, options=None, print_tree=False):
+    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=True)
+    subproject_dir = join(source_dir, 'lib')
+    if print_tree:
+        print(json.dumps(root.toJSON(), indent=4))
+    with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as cmake_lists_txt:
+        processed = {None}
+
+        def cb(module):
+            if module.name in processed or module.exclude_from_cmake or not exists(
+                    join(module.directory, "CMakeLists.txt")):
+                return
+            for key, value in module.options.items():
+                if value is None:
+                    cmake_lists_txt.write('unset(%s CACHE)\n' % (key))
+                    continue
+                elif isinstance(value, bool):
+                    kind = "BOOL"
+                    value = 'ON' if value else 'OFF'
+                else:
+                    kind = "STRING"
+                cmake_lists_txt.write('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
+            cmake_lists_txt.write('add_subdirectory(%s)\n' % (module.directory))
+            processed.add(module.name)
+
+        walk_tree(root, cb)

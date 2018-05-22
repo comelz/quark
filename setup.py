@@ -8,7 +8,7 @@ def read(fname):
 
 config = {
     'name': "quark",
-    'version': "0.1",
+    'version': "0.2",
     'author': "Walter Oggioni",
     'author_email': "oggioni.walter@gmail.com",
     'description': ("Meson dependency management plugin"),
@@ -33,11 +33,12 @@ config = {
     "entry_points": {
         'console_scripts': [
             'quark=quark.cli:main',
-            'quark-checkout=quark.checkout:checkout',
-            'quark-co=quark.checkout:checkout',
-            'quark-update=quark.checkout:update',
-            'quark-up=quark.checkout:update',
-            'quark-freeze=quark.freeze:freeze',
+            'quark-checkout=quark.checkout:run',
+            'quark-co=quark.checkout:run',
+            'quark-update=quark.update:run',
+            'quark-up=quark.update:run',
+            'quark-freeze=quark.freeze:run',
+            'quark-fz=quark.freeze:run',
         ],
     }
 }
