@@ -19,28 +19,10 @@ def load_conf(folder):
     else:
         return None
 
-
 def walk_tree(root, callback):
-    class StackElement:
-        def __init__(self, node):
-            self.node = node
-            self.index = 0
-            self.children = list(node.children)
-
-    stack = [StackElement(root)]
-    while len(stack) > 0:
-        stack_element = stack[-1]
-        if stack_element.index == len(stack_element.children):
-            if callback.__code__.co_argcount == 1:
-                callback(stack_element.node)
-            if callback.__code__.co_argcount == 2:
-                callback(stack_element.node, len(stack))
-            stack.pop()
-        else:
-            child = stack_element.children[stack_element.index]
-            stack.append(StackElement(child))
-            stack_element.index += 1
-
+    for c in root.children:
+        walk_tree(c, callback)
+    callback(root)
 
 def update_dict(original, updated):
     for key, value in updated.items():
