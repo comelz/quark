@@ -77,7 +77,6 @@ class Subproject(Node):
                 mod.parents.add(parent)
                 if update:
                     mod.update()
-                stack.append(mod)
             else:
                 if newmodule.exclude_from_cmake != mod.exclude_from_cmake:
                     children_conf = [join(parent.directory, dependency_file) for parent in mod.parents]
@@ -103,6 +102,7 @@ class Subproject(Node):
                             raise ValueError(
                                 "Conflicting values option '%s' of module '%s'" % (key, mod.name)
                             )
+            stack.append(mod)
             parent.children.add(mod)
 
         freeze_conf = join(root.directory, freeze_file)

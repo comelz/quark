@@ -8,7 +8,7 @@ def read(fname):
 
 config = {
     'name': "quark",
-    'version': "0.2",
+    'version': "0.3",
     'author': "Walter Oggioni",
     'author_email': "oggioni.walter@gmail.com",
     'description': ("Meson dependency management plugin"),
