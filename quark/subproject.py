@@ -299,12 +299,9 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False):
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
     with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as cmake_lists_txt:
-        processed = {None}
+        processed = set()
 
-        def cb(module):
-            if module.name in processed or module.exclude_from_cmake or not exists(
-                    join(module.directory, "CMakeLists.txt")):
-                return
+        def dump_options(module):
             for key, value in module.options.items():
                 if value is None:
                     cmake_lists_txt.write('unset(%s CACHE)\n' % (key))
@@ -315,7 +312,15 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False):
                 else:
                     kind = "STRING"
                 cmake_lists_txt.write('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
+
+        def cb(module):
+            if (module is root or
+                module.name in processed or 
+                module.exclude_from_cmake or 
+                not exists(join(module.directory, "CMakeLists.txt"))):
+                return
+            dump_options(module)
             cmake_lists_txt.write('add_subdirectory(%s)\n' % (module.directory))
             processed.add(module.name)
-
+        dump_options(root)
         walk_tree(root, cb)
