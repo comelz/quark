@@ -5,17 +5,23 @@ import subprocess
 import argparse
 import hashlib
 import json
+import logging
 
 cache_file = os.path.join('quark', 'quark_cache.json')
 dependency_file = 'subprojects.quark'
 freeze_file = 'freeze.quark'
-
+logger = logging.getLogger(__name__)
 
 def load_conf(folder):
     filepath = path.join(folder, dependency_file)
     if path.exists(filepath):
-        with open(path.join(folder, dependency_file), 'r') as f:
-            return json.load(f)
+        jsonfile = path.join(folder, dependency_file)
+        try:
+            with open(jsonfile, 'r') as f:
+                return json.load(f)
+        except json.decoder.JSONDecodeError as err:
+            logger.error("Error parsing '%s'" % jsonfile)
+            raise err
     else:
         return None
 
