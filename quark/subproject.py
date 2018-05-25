@@ -115,14 +115,16 @@ class Subproject(Node):
         while len(stack):
             current_module = stack.pop()
             if current_module.external_project:
-                fork([sys.executable, '-m', ''])
+                generate_cmake_script(current_module.directory)
+                continue
             conf = load_conf(current_module.directory)
             if conf:
                 for name, depobject in conf.get('depends', {}).items():
+                    external_project = depobject.get('external_project', False)
                     add_module(current_module, name,
                                freeze_dict.get(name, depobject.get('url', None)), depobject.get('options', {}),
-                               exclude_from_cmake=depobject.get('exclude_from_cmake', False),
-                               external_project=depobject.get('external_project', False)
+                               exclude_from_cmake=depobject.get('exclude_from_cmake', external_project),
+                               external_project=external_project
                                )
                 for key, optobjects in conf.get('optdepends', {}).items():
                     if isinstance(optobjects, dict):
