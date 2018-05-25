@@ -15,7 +15,7 @@ config = {
     'long_description': '',
     'license': "MIT",
     'keywords': "build",
-    'url': "https://github.com/comelz/czmake",
+    'url': "https://github.com/comelz/quark",
     'packages': ['quark'],
     'include_package_data': True,
     'classifiers': [
