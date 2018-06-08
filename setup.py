@@ -8,7 +8,7 @@ def read(fname):
 
 config = {
     'name': "quark",
-    'version': "0.4",
+    'version': "0.5",
     'author': "Comelz SpA",
     'author_email': "software@comelz.com",
     'description': ("Dependency management plugin"),

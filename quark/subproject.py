@@ -51,10 +51,10 @@ class Subproject(Node):
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
         subproject_dir = join(source_dir, 'lib')
         if url:
-            root = Subproject.create(None, url, source_dir, options or {})
+            root = Subproject.create(None, url, source_dir, {}, toplevel = True)
             root.checkout()
         else:
-            root = Subproject(directory=source_dir, options=options or {})
+            root = Subproject(directory=source_dir, options={}, toplevel = True)
         stack = [root]
         modules = {}
 
@@ -119,6 +119,10 @@ class Subproject(Node):
                 continue
             conf = load_conf(current_module.directory)
             if conf:
+                if current_module.toplevel:
+                    current_module.options = conf.get('toplevel_options', {})
+                    if options:
+                        current_module.options.update(options)
                 for name, depobject in conf.get('depends', {}).items():
                     external_project = depobject.get('external_project', False)
                     add_module(current_module, name,
@@ -141,13 +145,14 @@ class Subproject(Node):
                                            depobject.get('options', {}))
         return root, modules
 
-    def __init__(self, name=None, directory=None, options=None, exclude_from_cmake=False, external_project=False):
+    def __init__(self, name=None, directory=None, options=None, exclude_from_cmake=False, external_project=False, toplevel = False):
         super().__init__()
         self.name = name
         self.directory = directory
         self.options = options or {}
         self.exclude_from_cmake = exclude_from_cmake
         self.external_project = external_project
+        self.toplevel = toplevel
 
     def __hash__(self):
         return self.name.__hash__()
