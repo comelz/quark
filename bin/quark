@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import importlib
+bin_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(bin_dir, ".."))
+from setup import config
+
+def main():
+    argc = len(sys.argv)
+    cmd = ("quark-%s" % sys.argv[1]) if argc > 1 else "quark"
+    sys.argv[:] = [cmd] + sys.argv[2:]
+    for ep in (config.get("entry_points", {}).get("console_scripts")):
+        name, mod_fn = ep.split("=")
+        if name == cmd:
+            module_name, fn_name = mod_fn.split(":")
+            module = importlib.import_module(module_name)
+            fn = getattr(module, fn_name)
+            fn()
+
+if __name__ == "__main__":
+    main()
