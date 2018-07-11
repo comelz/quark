@@ -3,7 +3,7 @@ from setuptools import setup
 
 config = {
     'name': "quark",
-    'version': "0.5",
+    'version': "0.6",
     'author': "Comelz SpA",
     'author_email': "software@comelz.com",
     'description': ("Dependency management plugin"),
