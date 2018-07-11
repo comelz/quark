@@ -1,13 +1,8 @@
 import sys
-import json
-from os import access, environ, pathsep, X_OK, listdir, getcwd
+from os import access, environ, pathsep, X_OK, listdir
 from os.path import isfile, split, join, abspath, basename, exists
 from shutil import which
 from subprocess import check_call, CalledProcessError
-from quark.utils import mkdir, load_conf, freeze_file, dependency_file, walk_tree
-from .subproject import Subproject
-from argparse import ArgumentParser
-from urllib.parse import urlparse
 
 def main():
     try:
