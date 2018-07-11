@@ -34,6 +34,8 @@ config = {
             'quark-up=quark.update:run',
             'quark-freeze=quark.freeze:run',
             'quark-fz=quark.freeze:run',
+            'quark-status=quark.status:run',
+            'quark-st=quark.status:run',
         ],
     }
 }
