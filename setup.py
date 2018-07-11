@@ -1,10 +1,5 @@
 from os.path import join, dirname
-from setuptools import setup, find_packages
-
-
-def read(fname):
-    return open(join(dirname(__file__), fname)).read()
-
+from setuptools import setup
 
 config = {
     'name': "quark",
@@ -42,4 +37,6 @@ config = {
         ],
     }
 }
-setup(**config)
+
+if __name__ == "__main__":
+    setup(**config)
