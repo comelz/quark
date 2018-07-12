@@ -166,13 +166,8 @@ class Subproject(Node):
     def update(self):
         raise NotImplementedError()
 
-    def _status(self):
-        print("Unsupported external %s" % self.directory)
-
     def status(self):
-        print("=== status of %s ===" % self.directory)
-        self._status()
-        print()
+        print("Unsupported external %s" % self.directory)
 
     def local_edit(self):
         raise NotImplementedError()
@@ -235,7 +230,7 @@ class GitSubproject(Subproject):
                 fork(['git', 'fetch'])
                 fork(['git', 'checkout', self.ref])
 
-    def _status(self):
+    def status(self):
         fork(['git', "--git-dir=%s/.git" % self.directory, "--work-tree=%s" % self.directory, 'status'])
 
     def has_local_edit(self):
@@ -294,7 +289,7 @@ class SvnSubproject(Subproject):
                 fork(['svn', 'switch', self.url.geturl()])
                 # fork(['svn', 'up', '-r', self.rev])
 
-    def _status(self):
+    def status(self):
         fork(['svn', 'status', self.directory])
 
     def has_local_edit(self):

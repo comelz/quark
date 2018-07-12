@@ -13,7 +13,9 @@ def run():
 
     root, modules = Subproject.create_dependency_tree(optlist.source_directory, update=False)
     for name, mod in modules.items():
+        print("=== Status of %s" % mod.directory)
         mod.status()
+        print()
 
 if __name__ == "__main__":
     run()
