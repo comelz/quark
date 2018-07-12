@@ -5,19 +5,21 @@ import sys
 import importlib
 bin_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(bin_dir, ".."))
-from setup import config
+from quark import checkout, update, freeze, status
+from quark.entrypoints import commands, aliases
 
 def main():
     argc = len(sys.argv)
-    cmd = ("quark-%s" % sys.argv[1]) if argc > 1 else "quark"
-    sys.argv[:] = [cmd] + sys.argv[2:]
-    for ep in (config.get("entry_points", {}).get("console_scripts")):
-        name, mod_fn = ep.split("=")
-        if name == cmd:
-            module_name, fn_name = mod_fn.split(":")
-            module = importlib.import_module(module_name)
-            fn = getattr(module, fn_name)
-            fn()
+    cmd = sys.argv[1] if argc > 1 else ""
+    cmd = dict(aliases).get(cmd, cmd)
+    fn = dict(commands).get(cmd)
+    if fn:
+        sys.argv[:] = ["%s %s" % tuple(sys.argv[0:2])] + sys.argv[2:]
+        fn()
+    else:
+        print("Available commands:")
+        for cmd, _ in sorted(commands):
+            print(" %s" % cmd)
 
 if __name__ == "__main__":
     main()

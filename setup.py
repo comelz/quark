@@ -1,5 +1,6 @@
 from os.path import join, dirname
 from setuptools import setup
+from quark.entrypoints import mk_setup_entry_points
 
 config = {
     'name': "quark",
@@ -26,17 +27,7 @@ config = {
         'Topic :: Utilities'
     ],
     "entry_points": {
-        'console_scripts': [
-            'quark=quark.cli:main',
-            'quark-checkout=quark.checkout:run',
-            'quark-co=quark.checkout:run',
-            'quark-update=quark.update:run',
-            'quark-up=quark.update:run',
-            'quark-freeze=quark.freeze:run',
-            'quark-fz=quark.freeze:run',
-            'quark-status=quark.status:run',
-            'quark-st=quark.status:run',
-        ],
+        'console_scripts': mk_setup_entry_points()
     }
 }
 
