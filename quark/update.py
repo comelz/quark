@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from .subproject import generate_cmake_script
+from .subproject import generate_cmake_script, Subproject
 from .utils import parse_option
 from os import getcwd
 
@@ -18,8 +18,10 @@ def run():
         for option in optlist.options:
             key, value = parse_option(option)
             options[key] = value
-    generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options)
 
+    root = Subproject.create("root", None, source_dir, {}, toplevel = True)
+    root.update()
+    generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options)
 
 if __name__ == "__main__":
     run()
