@@ -241,8 +241,9 @@ class GitSubproject(Subproject):
                     return True
         return False
 
-    def url_from_checkout(self):
-        with DirectoryContext(self.directory):
+    @staticmethod
+    def url_from_directory(directory):
+        with DirectoryContext(directory):
             with SubprocessContext(['git', 'remote', 'get-url', 'origin'], universal_newlines=True, stdout=PIPE,
                                    check=True) as pipe:
                 origin = pipe.stdout.read()[:-1]
@@ -251,6 +252,8 @@ class GitSubproject(Subproject):
                 commit = pipe.stdout.read()[:-1]
         return 'git+%s#commit=%s' % (origin, commit)
 
+    def url_from_checkout(self):
+        return self.url_from_directory(self.directory)
 
 class SvnSubproject(Subproject):
     def __init__(self, name, url, directory, options, **kwargs):
@@ -300,12 +303,15 @@ class SvnSubproject(Subproject):
             return True
         return False
 
-    def url_from_checkout(self):
-        with SubprocessContext(['svn', 'info', '--xml', self.directory], universal_newlines=True, stdout=PIPE,
+    @staticmethod
+    def url_from_directory(directory):
+        with SubprocessContext(['svn', 'info', '--xml', directory], universal_newlines=True, stdout=PIPE,
                                check=True) as pipe:
             doc = ElementTree.parse(pipe.stdout)
         return doc.findall('./entry/url')[0].text + "@" + doc.findall('./entry/commit')[0].get('revision')
 
+    def url_from_checkout(self):
+        return self.url_from_directory(self.directory)
 
 def generate_cmake_script(source_dir, url=None, options=None, print_tree=False):
     root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=True)
