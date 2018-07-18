@@ -35,26 +35,34 @@ class Subproject(Node):
     @staticmethod
     def create(name, urlstring, directory, options, **kwargs):
         if not urlstring:
-            return Subproject(name, directory, options, **kwargs)
-        url = urlparse(urlstring)
-        args = (name, url, directory, options)
-        if url.scheme.startswith('git'):
-            res = GitSubproject(*args, **kwargs)
-        elif url.scheme.startswith('svn'):
-            res = SvnSubproject(*args, **kwargs)
+            if exists(join(directory, ".svn")):
+                urlstring = SvnSubproject.url_from_directory(directory)
+                url = urlparse(urlstring)
+                res = SvnSubproject(name, url, directory, options, **kwargs)
+            elif exists(join(directory, ".git")):
+                urlstring = GitSubproject.url_from_directory(directory)
+                url = urlparse(urlstring)
+                res = GitSubproject(name, url, directory, options, **kwargs)
+            else:
+                res = None
         else:
-            raise ValueError("Unrecognized dependency for url '%s'", urlstring)
+            url = urlparse(urlstring)
+            args = (name, url, directory, options)
+            if url.scheme.startswith('git'):
+                res = GitSubproject(*args, **kwargs)
+            elif url.scheme.startswith('svn'):
+                res = SvnSubproject(*args, **kwargs)
+            else:
+                raise ValueError("Unrecognized dependency for url '%s'", urlstring)
         res.urlstring = urlstring
         return res
 
     @staticmethod
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
         subproject_dir = join(source_dir, 'lib')
-        if url:
-            root = Subproject.create(None, url, source_dir, {}, toplevel = True)
+        root = Subproject.create("root", url, source_dir, {}, toplevel = True)
+        if url and update:
             root.checkout()
-        else:
-            root = Subproject(directory=source_dir, options={}, toplevel = True)
         stack = [root]
         modules = {}
 
@@ -86,7 +94,7 @@ class Subproject(Node):
                                      (name, str(mod.exclude_from_cmake), children_conf, str(parent.exclude_from_cmake),
                                       parent_conf)
                                      )
-                if not newmodule.same_checkout(mod):
+                if not newmodule.same_checkout(mod) and uri is not None:
                     children = [join(parent.directory, dependency_file) for parent in mod.parents]
                     parent = join(parent.directory, dependency_file)
                     raise ValueError(
