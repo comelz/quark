@@ -111,11 +111,12 @@ class Subproject(Node):
                 freeze_dict = json.load(f)
         else:
             freeze_dict = {}
-        mkdir(subproject_dir)
+        if update:
+            mkdir(subproject_dir)
         while len(stack):
             current_module = stack.pop()
             if current_module.external_project:
-                generate_cmake_script(current_module.directory)
+                generate_cmake_script(current_module.directory, update = update)
                 continue
             conf = load_conf(current_module.directory)
             if conf:
@@ -313,34 +314,35 @@ class SvnSubproject(Subproject):
     def url_from_checkout(self):
         return self.url_from_directory(self.directory)
 
-def generate_cmake_script(source_dir, url=None, options=None, print_tree=False):
-    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=True)
+def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True):
+    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update)
     subproject_dir = join(source_dir, 'lib')
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
-    with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as cmake_lists_txt:
-        processed = set()
+    if update:
+        with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as cmake_lists_txt:
+            processed = set()
 
-        def dump_options(module):
-            for key, value in module.options.items():
-                if value is None:
-                    cmake_lists_txt.write('unset(%s CACHE)\n' % (key))
-                    continue
-                elif isinstance(value, bool):
-                    kind = "BOOL"
-                    value = 'ON' if value else 'OFF'
-                else:
-                    kind = "STRING"
-                cmake_lists_txt.write('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
+            def dump_options(module):
+                for key, value in module.options.items():
+                    if value is None:
+                        cmake_lists_txt.write('unset(%s CACHE)\n' % (key))
+                        continue
+                    elif isinstance(value, bool):
+                        kind = "BOOL"
+                        value = 'ON' if value else 'OFF'
+                    else:
+                        kind = "STRING"
+                    cmake_lists_txt.write('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
 
-        def cb(module):
-            if (module is root or
-                module.name in processed or 
-                module.exclude_from_cmake or 
-                not exists(join(module.directory, "CMakeLists.txt"))):
-                return
-            dump_options(module)
-            cmake_lists_txt.write('add_subdirectory(%s)\n' % (module.directory))
-            processed.add(module.name)
-        dump_options(root)
-        walk_tree(root, cb)
+            def cb(module):
+                if (module is root or
+                    module.name in processed or 
+                    module.exclude_from_cmake or 
+                    not exists(join(module.directory, "CMakeLists.txt"))):
+                    return
+                dump_options(module)
+                cmake_lists_txt.write('add_subdirectory(%s)\n' % (module.directory))
+                processed.add(module.name)
+            dump_options(root)
+            walk_tree(root, cb)
