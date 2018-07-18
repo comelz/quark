@@ -12,7 +12,7 @@ def run():
     optlist = parser.parse_args()
 
     root, modules = Subproject.create_dependency_tree(optlist.source_directory, update=False)
-    for name, mod in modules.items():
+    for mod in ([root] + list(modules.values())):
         print("=== Status of %s" % mod.directory)
         mod.status()
         print()
