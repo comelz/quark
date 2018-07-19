@@ -12,12 +12,10 @@ from quark.utils import freeze_file, dependency_file, mkdir, load_conf, walk_tre
 
 logger = logging.getLogger(__name__)
 
-
 class Node:
     def __init__(self):
         self.parents = set()
         self.children = set()
-
 
 class Subproject(Node):
     subproject_dir = None
@@ -59,7 +57,8 @@ class Subproject(Node):
 
     @staticmethod
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
-        subproject_dir = join(source_dir, 'lib')
+        conf = load_conf(source_dir)
+        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
         root = Subproject.create("root", url, source_dir, {}, toplevel = True)
         if url and update:
             root.checkout()
@@ -324,7 +323,8 @@ class SvnSubproject(Subproject):
 
 def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True):
     root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update)
-    subproject_dir = join(source_dir, 'lib')
+    conf = load_conf(source_dir)
+    subproject_dir = join(source_dir, conf.get("subprojects_dirs", 'lib'))
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
     if update:
