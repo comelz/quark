@@ -1,9 +1,11 @@
 import logging
 import json
-from os.path import exists, join
+import os
+from os.path import exists, join, isdir
 from shutil import rmtree
-from subprocess import check_output, call, PIPE
+from subprocess import check_output, call, PIPE, Popen, check_call, CalledProcessError
 from urllib.parse import urlparse
+import shutil
 
 import xml.etree.ElementTree as ElementTree
 
@@ -11,6 +13,9 @@ from quark.utils import DirectoryContext, fork, SubprocessContext
 from quark.utils import freeze_file, dependency_file, mkdir, load_conf, walk_tree
 
 logger = logging.getLogger(__name__)
+
+class QuarkError(RuntimeError):
+    pass
 
 class Node:
     def __init__(self):
@@ -42,7 +47,7 @@ class Subproject(Node):
                 url = urlparse(urlstring)
                 res = GitSubproject(name, url, directory, options, **kwargs)
             else:
-                res = None
+                raise QuarkError("Couldn't detect repository type for directory %s" % directory)
         else:
             url = urlparse(urlstring)
             args = (name, url, directory, options)
@@ -57,9 +62,11 @@ class Subproject(Node):
 
     @staticmethod
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
-        conf = load_conf(source_dir)
-        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
         root = Subproject.create("root", url, source_dir, {}, toplevel = True)
+        conf = load_conf(source_dir)
+        if conf is None:
+            return root, {}
+        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
         if url and update:
             root.checkout()
         stack = [root]
@@ -183,6 +190,9 @@ class Subproject(Node):
     def url_from_checkout(self):
         raise NotImplementedError()
 
+    def mirror(self, dest):
+        raise NotImplementedError()
+
     def toJSON(self):
         return {
             "name": self.name,
@@ -263,6 +273,31 @@ class GitSubproject(Subproject):
     def url_from_checkout(self):
         return self.url_from_directory(self.directory)
 
+    def mirror(self, dst_dir):
+        source_dir = self.directory
+        def mkdir_p(path):
+            if path.strip() != '' and not os.path.exists(path):
+                os.makedirs(path)
+
+        env = os.environ.copy()
+        env['LC_MESSAGES'] = 'C'
+
+        def tracked_files():
+            p = Popen(['git', 'ls-tree', '-r', '--name-only', 'HEAD'], stdout=PIPE, env=env)
+            out = p.communicate()[0]
+            if p.returncode != 0 or not out.strip():
+                return None
+            return [e.strip() for e in out.splitlines() if os.path.exists(e)]
+
+        def cp(src, dst):
+            r, f = os.path.split(dst)
+            mkdir_p(r)
+            shutil.copy2(src, dst)
+
+        with DirectoryContext(source_dir):
+            for t in tracked_files():
+                cp(t, os.path.join(dst_dir, t.decode()))
+
 class SvnSubproject(Subproject):
     def __init__(self, name, url, directory, options, **kwargs):
         super().__init__(name, directory, options, **kwargs)
@@ -321,8 +356,47 @@ class SvnSubproject(Subproject):
     def url_from_checkout(self):
         return self.url_from_directory(self.directory)
 
+    def mirror(self, dst, quick = False):
+        import shutil
+        src = self.directory
+
+        os.chdir(src)
+        if not quick and isdir(dst):
+            shutil.rmtree(dst)
+        if not isdir(dst):
+            os.makedirs(dst)
+
+        # Forziamo il locale a inglese, perché parseremo l'output di svn e non
+        # vogliamo errori dovuti alle traduzioni.
+        env = os.environ.copy()
+        env["LC_MESSAGES"] = "C"
+
+        dirs = ["."]
+
+        # Esegue svn info ricorsivamente per iterare su tutti i file versionati.
+        for D in dirs:
+            infos = {}
+            for L in Popen(["svn", "info", "--recursive", D], stdout=PIPE, env=env).stdout:
+                L = L.decode()
+                if L.strip():
+                    k,v = L.strip().split(": ", 1)
+                    infos[k] = v
+                else:
+                    if infos["Schedule"] == "delete":
+                        continue
+                    fn = infos["Path"]
+                    infos = {}
+                    if fn == ".":
+                        continue
+                    fn1 = join(src, fn)
+                    fn2 = join(dst, fn)
+                    if isdir(fn1):
+                        if not isdir(fn2):
+                            os.makedirs(fn2)
+                    elif not quick or newer(fn1, fn2):
+                        shutil.copy2(fn1, fn2)
+
 def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True):
-    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update)
     conf = load_conf(source_dir)
     subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
     if print_tree:

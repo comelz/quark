@@ -1,10 +1,11 @@
-from quark import checkout, freeze, status, update
+from quark import checkout, freeze, status, update, mirror
 
 commands = [
     ('checkout', checkout.run),
     ('freeze', freeze.run),
     ('status', status.run),
     ('update', update.run),
+    ('mirror', mirror.run),
 ]
 
 aliases = [('co', 'checkout'),
