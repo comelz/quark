@@ -63,12 +63,12 @@ class Subproject(Node):
     @staticmethod
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
         root = Subproject.create("root", url, source_dir, {}, toplevel = True)
-        conf = load_conf(source_dir)
-        if conf is None:
-            return root, {}
-        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
         if url and update:
             root.checkout()
+        conf = load_conf(source_dir)
+        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
+        if conf is None:
+            return root, {}
         stack = [root]
         modules = {}
 
