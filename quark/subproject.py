@@ -66,9 +66,9 @@ class Subproject(Node):
         if url and update:
             root.checkout()
         conf = load_conf(source_dir)
-        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
         if conf is None:
             return root, {}
+        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
         stack = [root]
         modules = {}
 
@@ -399,7 +399,9 @@ class SvnSubproject(Subproject):
 def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True):
     root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update)
     conf = load_conf(source_dir)
-    subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
+    subproject_dir = "lib"
+    if conf is not None:
+        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
     if update:
