@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from .subproject import generate_cmake_script, Subproject
+from .subproject import generate_cmake_script, Subproject, url_from_directory
 from .utils import parse_option
 from os import getcwd
 
@@ -19,7 +19,8 @@ def run():
             key, value = parse_option(option)
             options[key] = value
 
-    root = Subproject.create("root", None, source_dir, {}, toplevel = True)
+    root_url = url_from_directory(source_dir, include_commit = False)
+    root = Subproject.create("root", root_url, source_dir, {}, toplevel = True)
     root.update()
     generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options)
 
