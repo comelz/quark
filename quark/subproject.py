@@ -37,15 +37,14 @@ class Subproject(Node):
     def create(name, urlstring, directory, options, **kwargs):
         if not urlstring:
             if exists(join(directory, ".svn")):
-                urlstring = SvnSubproject.url_from_directory(directory)
-                url = urlparse(urlstring)
-                res = SvnSubproject(name, url, directory, options, **kwargs)
+                cls = SvnSubproject
             elif exists(join(directory, ".git")):
-                urlstring = GitSubproject.url_from_directory(directory)
-                url = urlparse(urlstring)
-                res = GitSubproject(name, url, directory, options, **kwargs)
+                cls = GitSubproject
             else:
                 raise QuarkError("Couldn't detect repository type for directory %s" % directory)
+            urlstring = cls.url_from_directory(directory)
+            url = urlparse(urlstring)
+            res = cls(name, url, directory, options, **kwargs)
         else:
             url = urlparse(urlstring)
             args = (name, url, directory, options)
