@@ -22,6 +22,16 @@ class Node:
         self.parents = set()
         self.children = set()
 
+def url_from_directory(directory, include_commit = True):
+    if exists(join(directory, ".svn")):
+        cls = SvnSubproject
+    elif exists(join(directory, ".git")):
+        cls = GitSubproject
+    else:
+        raise QuarkError("Couldn't detect repository type for directory %s" % directory)
+    return cls.url_from_directory(directory, include_commit)
+
+
 class Subproject(Node):
     @staticmethod
     def _parse_fragment(url):
@@ -35,25 +45,16 @@ class Subproject(Node):
 
     @staticmethod
     def create(name, urlstring, directory, options, **kwargs):
-        if not urlstring:
-            if exists(join(directory, ".svn")):
-                cls = SvnSubproject
-            elif exists(join(directory, ".git")):
-                cls = GitSubproject
-            else:
-                raise QuarkError("Couldn't detect repository type for directory %s" % directory)
-            urlstring = cls.url_from_directory(directory)
-            url = urlparse(urlstring)
-            res = cls(name, url, directory, options, **kwargs)
+        if urlstring is None:
+            urlstring = url_from_directory(directory)
+        url = urlparse(urlstring)
+        args = (name, url, directory, options)
+        if url.scheme.startswith('git'):
+            res = GitSubproject(*args, **kwargs)
+        elif url.scheme.startswith('svn'):
+            res = SvnSubproject(*args, **kwargs)
         else:
-            url = urlparse(urlstring)
-            args = (name, url, directory, options)
-            if url.scheme.startswith('git'):
-                res = GitSubproject(*args, **kwargs)
-            elif url.scheme.startswith('svn'):
-                res = SvnSubproject(*args, **kwargs)
-            else:
-                raise ValueError("Unrecognized dependency for url '%s'", urlstring)
+            raise ValueError("Unrecognized dependency for url '%s'", urlstring)
         res.urlstring = urlstring
         return res
 
