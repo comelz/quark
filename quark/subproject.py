@@ -257,7 +257,7 @@ class GitSubproject(Subproject):
         return False
 
     @staticmethod
-    def url_from_directory(directory):
+    def url_from_directory(directory, include_commit = True):
         with DirectoryContext(directory):
             with SubprocessContext(['git', 'remote', 'get-url', 'origin'], universal_newlines=True, stdout=PIPE,
                                    check=True) as pipe:
@@ -265,7 +265,10 @@ class GitSubproject(Subproject):
             with SubprocessContext(['git', 'log', '-1', '--format=%H'], universal_newlines=True, stdout=PIPE,
                                    check=True) as pipe:
                 commit = pipe.stdout.read()[:-1]
-        return 'git+%s#commit=%s' % (origin, commit)
+        ret = 'git+%s' % (origin,)
+        if include_commit:
+            ret += '#commit=%s' % (commit,)
+        return ret
 
     def url_from_checkout(self):
         return self.url_from_directory(self.directory)
@@ -344,11 +347,14 @@ class SvnSubproject(Subproject):
         return False
 
     @staticmethod
-    def url_from_directory(directory):
+    def url_from_directory(directory, include_commit = True):
         with SubprocessContext(['svn', 'info', '--xml', directory], universal_newlines=True, stdout=PIPE,
                                check=True) as pipe:
             doc = ElementTree.parse(pipe.stdout)
-        return doc.findall('./entry/url')[0].text + "@" + doc.findall('./entry/commit')[0].get('revision')
+        ret = doc.findall('./entry/url')[0].text
+        if include_commit:
+            ret += "@" + doc.findall('./entry/commit')[0].get('revision')
+        return ret
 
     def url_from_checkout(self):
         return self.url_from_directory(self.directory)
