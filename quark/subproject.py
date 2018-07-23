@@ -23,8 +23,6 @@ class Node:
         self.children = set()
 
 class Subproject(Node):
-    subproject_dir = None
-
     @staticmethod
     def _parse_fragment(url):
         res = {}
