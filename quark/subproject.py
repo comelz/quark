@@ -402,13 +402,11 @@ class SvnSubproject(Subproject):
 
 def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True):
     root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update)
-    conf = load_conf(source_dir)
-    subproject_dir = "lib"
-    if conf is not None:
-        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
-    if update:
+    conf = load_conf(source_dir)
+    if update and conf is not None:
+        subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
         with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as cmake_lists_txt:
             processed = set()
 
