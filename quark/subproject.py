@@ -244,7 +244,7 @@ class GitSubproject(Subproject):
         else:
             with DirectoryContext(self.directory):
                 fork(['git', 'fetch'])
-                fork(['git', 'checkout', self.ref])
+                fork(['git', 'checkout', self.ref, '--'])
 
     def status(self):
         fork(['git', "--git-dir=%s/.git" % self.directory, "--work-tree=%s" % self.directory, 'status'])
