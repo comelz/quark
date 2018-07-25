@@ -234,7 +234,9 @@ class GitSubproject(Subproject):
                         self.directory, self.url.geturl())
 
     def checkout(self):
-        fork(['git', 'clone', self.url.geturl(), self.directory])
+        fork(['git', 'clone', '-n', '--', self.url.geturl(), self.directory])
+        with DirectoryContext(self.directory):
+           fork(['git', 'checkout', self.ref])
 
     def update(self):
         if not exists(self.directory):
