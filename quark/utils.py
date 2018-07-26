@@ -61,7 +61,7 @@ def mkdir(path):
         os.makedirs(path)
     except OSError as ex:
         if ex.errno != errno.EEXIST or not os.path.isdir(path):
-            raise ex
+            raise
 
 def str2bool(v):
     if v.lower() in {'yes', 'true', 't', 'y', '1', 'on'}:
