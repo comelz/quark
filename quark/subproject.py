@@ -258,10 +258,8 @@ class GitSubproject(Subproject):
     @staticmethod
     def url_from_directory(directory, include_commit = True):
         with cd(directory):
-            cp = run(['git', 'remote', 'get-url', 'origin'], universal_newlines=True, stdout=PIPE, check=True)
-            origin = cp.stdout[:-1]
-            cp = run(['git', 'log', '-1', '--format=%H'], universal_newlines=True, stdout=PIPE, check=True)
-            commit = cp.stdout[:-1]
+            origin = check_output(['git', 'remote', 'get-url', 'origin'], universal_newlines=True)[:-1]
+            commit = check_output(['git', 'log', '-1', '--format=%H'], universal_newlines=True)[:-1]
         ret = 'git+%s' % (origin,)
         if include_commit:
             ret += '#commit=%s' % (commit,)
@@ -335,16 +333,16 @@ class SvnSubproject(Subproject):
         fork(['svn', 'status', self.directory])
 
     def has_local_edit(self):
-        cp = run(['svn', 'st', '--xml', self.directory], universal_newlines=True, stdout=PIPE, check=True)
-        doc = ElementTree.fromstring(cp.stdout)
+        xml = check_output(['svn', 'st', '--xml', self.directory], universal_newlines=True)
+        doc = ElementTree.fromstring(xml)
         for entry in doc.findall('./status/target/entry[@path="%s"]/entry[@item="modified"]' % self.directory):
             return True
         return False
 
     @staticmethod
     def url_from_directory(directory, include_commit = True):
-        cp = run(['svn', 'info', '--xml', directory], universal_newlines=True, stdout=PIPE, check=True)
-        doc = ElementTree.fromstring(cp.stdout)
+        xml = check_output(['svn', 'info', '--xml', directory], universal_newlines=True)
+        doc = ElementTree.fromstring(xml)
         ret = doc.findall('./entry/url')[0].text
         if include_commit:
             ret += "@" + doc.findall('./entry/commit')[0].get('revision')
