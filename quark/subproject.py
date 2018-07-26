@@ -253,7 +253,7 @@ class GitSubproject(Subproject):
 
     def has_local_edit(self):
         with cd(self.directory):
-            return check_output(['git', 'status', '--porcelain'])
+            return check_output(['git', 'status', '--porcelain']) != ""
 
     @staticmethod
     def url_from_directory(directory, include_commit = True):
