@@ -17,11 +17,6 @@ logger = logging.getLogger(__name__)
 class QuarkError(RuntimeError):
     pass
 
-class Node:
-    def __init__(self):
-        self.parents = set()
-        self.children = set()
-
 def url_from_directory(directory, include_commit = True):
     if exists(join(directory, ".svn")):
         cls = SvnSubproject
@@ -32,7 +27,7 @@ def url_from_directory(directory, include_commit = True):
     return cls.url_from_directory(directory, include_commit)
 
 
-class Subproject(Node):
+class Subproject:
     @staticmethod
     def _parse_fragment(url):
         res = {}
@@ -159,7 +154,8 @@ class Subproject(Node):
         return root, modules
 
     def __init__(self, name=None, directory=None, options=None, exclude_from_cmake=False, external_project=False, toplevel = False):
-        super().__init__()
+        self.parents = set()
+        self.children = set()
         self.name = name
         self.directory = directory
         self.options = options or {}
