@@ -10,7 +10,7 @@ import shutil
 import xml.etree.ElementTree as ElementTree
 
 from quark.utils import DirectoryContext as cd, fork
-from quark.utils import freeze_file, dependency_file, mkdir, load_conf, walk_tree
+from quark.utils import freeze_file, dependency_file, mkdir, load_conf
 
 logger = logging.getLogger(__name__)
 
@@ -398,29 +398,48 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
     conf = load_conf(source_dir)
     if update and conf is not None:
         subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
-        with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as cmake_lists_txt:
-            processed = set()
 
-            def dump_options(module):
-                for key, value in module.options.items():
-                    if value is None:
-                        cmake_lists_txt.write('unset(%s CACHE)\n' % (key))
-                        continue
-                    elif isinstance(value, bool):
-                        kind = "BOOL"
-                        value = 'ON' if value else 'OFF'
-                    else:
-                        kind = "STRING"
-                    cmake_lists_txt.write('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
+        cmakelists_rows = []
+        processed = set()
 
-            def cb(module):
-                if (module is root or
-                    module.name in processed or 
-                    module.exclude_from_cmake or 
-                    not exists(join(module.directory, "CMakeLists.txt"))):
+        def dump_options(module):
+            for key, value in sorted(module.options.items()):
+                if value is None:
+                    cmakelists_rows.append('unset(%s CACHE)\n' % (key))
+                    continue
+                elif isinstance(value, bool):
+                    kind = "BOOL"
+                    value = 'ON' if value else 'OFF'
+                else:
+                    kind = "STRING"
+                cmakelists_rows.append('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
+
+        def process_module(module):
+            if (module.name in processed or
+                module.exclude_from_cmake or
+                not exists(join(module.directory, "CMakeLists.txt"))):
+                return
+            dump_options(module)
+            if module is not root:
+                cmakelists_rows.append('add_subdirectory(%s)\n' % (module.directory))
+            processed.add(module.name)
+            # module.children is a set, whose iteration order changes from run to run
+            # make this deterministic (we want to generate always the same CMakeLists.txt)
+            for c in sorted(module.children, key = lambda x: x.name):
+                process_module(c)
+
+        process_module(root)
+
+        # write only if different
+        cmakelists_data = ''.join(cmakelists_rows)
+        try:
+            with open(join(subproject_dir, 'CMakeLists.txt'), 'r') as f:
+                if cmakelists_data == f.read():
+                    # nothing to do, avoid touching the file (which often yields a full rebuild)
                     return
-                dump_options(module)
-                cmake_lists_txt.write('add_subdirectory(%s)\n' % (module.directory))
-                processed.add(module.name)
-            dump_options(root)
-            walk_tree(root, cb)
+        except IOError:
+            pass
+        # actually write the file
+        with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as f:
+            f.write(cmakelists_data)
+

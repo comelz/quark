@@ -25,11 +25,6 @@ def load_conf(folder):
     else:
         return None
 
-def walk_tree(root, callback):
-    for c in root.children:
-        walk_tree(c, callback)
-    callback(root)
-
 def fork(*args, **kwargs):
     sys.stdout.write(' '.join(args[0]) + '\n')
     sys.stdout.flush()
