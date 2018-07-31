@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from .subproject import generate_cmake_script, Subproject, url_from_directory, QuarkError
+from .subproject import generate_cmake_script, Subproject, url_from_directory
 from .utils import parse_option
 from os import getcwd
 
