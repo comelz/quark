@@ -40,11 +40,12 @@ class Subproject:
 
     @staticmethod
     def create(name, urlstring, directory, options, **kwargs):
-        if urlstring is None:
-            urlstring = url_from_directory(directory)
         url = urlparse(urlstring)
         args = (name, url, directory, options)
-        if url.scheme.startswith('git'):
+        if urlstring is None:
+            # fake project, used for non-versioned root
+            res = Subproject(name, directory, options, **kwargs)
+        elif url.scheme.startswith('git'):
             res = GitSubproject(*args, **kwargs)
         elif url.scheme.startswith('svn'):
             res = SvnSubproject(*args, **kwargs)
@@ -78,6 +79,9 @@ class Subproject:
             raise err
 
         def add_module(parent, name, uri, options, **kwargs):
+            if uri is None:
+                # options add only, lookup from existing modules
+                uri = modules[name].urlstring
             newmodule = Subproject.create(name, uri, join(subproject_dir, name), options, **kwargs)
             mod = modules.setdefault(name, newmodule)
             if mod is newmodule:
