@@ -411,18 +411,21 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
                 cmakelists_rows.append('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
 
         def process_module(module):
-            if (module.name in processed or
-                module.exclude_from_cmake or
-                not exists(join(module.directory, "CMakeLists.txt"))):
+            # notice: if a module is marked as excluded from cmake we also
+            # exclude its dependencies; they are nonetheless included if they
+            # are required by another module which is not excluded from cmake
+            if module.name in processed or module.exclude_from_cmake:
                 return
-            dump_options(module)
-            if module is not root:
-                cmakelists_rows.append('add_subdirectory(%s)\n' % (module.directory))
             processed.add(module.name)
+            # first add the dependent modules
             # module.children is a set, whose iteration order changes from run to run
             # make this deterministic (we want to generate always the same CMakeLists.txt)
             for c in sorted(module.children, key = lambda x: x.name):
                 process_module(c)
+            # dump options and add to the generated CMakeLists.txt
+            dump_options(module)
+            if module is not root and exists(join(module.directory, "CMakeLists.txt")):
+                cmakelists_rows.append('add_subdirectory(%s)\n' % (module.directory))
 
         process_module(root)
 
