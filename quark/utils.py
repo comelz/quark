@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import errno
+from urllib.request import urlopen
 
 dependency_file = 'subprojects.quark'
 freeze_file = 'freeze.quark'
@@ -18,7 +19,28 @@ def load_conf(folder):
         jsonfile = path.join(folder, dependency_file)
         try:
             with open(jsonfile, 'r') as f:
-                return json.load(f)
+                result = json.load(f)
+                if isinstance(result, dict) and "catalog" in result:
+                    # Fill-in with default options from catalog
+                    cat = json.load(urlopen(result["catalog"]))
+                    
+                    def filldefault(depends):
+                        for module, opts in depends.items():
+                            name = opts.get("name", module.split("/")[-1])
+                            if name in cat:
+                                for opt, value in cat[name].items():
+                                    if opt not in opts:
+                                        opts[opt] = value
+
+                    if "depends" in result:
+                        filldefault(result["depends"])
+
+                    if "optdepends" in result:
+                        for option, deps in result["optdepends"].items():
+                            for d in deps:
+                                if "depends" in d:
+                                    filldefault(d["depends"])
+                return result
         except json.decoder.JSONDecodeError as err:
             logger.error("Error parsing '%s'" % jsonfile)
             raise err
