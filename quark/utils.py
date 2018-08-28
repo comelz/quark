@@ -7,11 +7,13 @@ import argparse
 import json
 import logging
 import errno
+import copy
 from urllib.request import urlopen
 
 dependency_file = 'subprojects.quark'
 freeze_file = 'freeze.quark'
 logger = logging.getLogger(__name__)
+catalog_cache = {}
 
 def load_conf(folder):
     filepath = path.join(folder, dependency_file)
@@ -22,7 +24,13 @@ def load_conf(folder):
                 result = json.load(f)
                 if isinstance(result, dict) and "catalog" in result:
                     # Fill-in with default options from catalog
-                    cat = json.loads(urlopen(result["catalog"]).read().decode('utf-8'))
+                    catalog_url = result["catalog"]
+
+                    # The catalog is often the same for all dependencies, don't
+                    # hammer the server *and* make sure we have a coherent view
+                    if catalog_url not in catalog_cache:
+                        catalog_cache[catalog_url] = json.loads(urlopen(result["catalog"]).read().decode('utf-8'))
+                    cat = catalog_cache[catalog_url]
 
                     def filldefault(depends):
                         for module, opts in depends.items():
@@ -30,7 +38,7 @@ def load_conf(folder):
                             if name in cat:
                                 for opt, value in cat[name].items():
                                     if opt not in opts:
-                                        opts[opt] = value
+                                        opts[opt] = copy.deepcopy(value)
 
                     if "depends" in result:
                         filldefault(result["depends"])
