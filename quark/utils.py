@@ -22,8 +22,8 @@ def load_conf(folder):
                 result = json.load(f)
                 if isinstance(result, dict) and "catalog" in result:
                     # Fill-in with default options from catalog
-                    cat = json.load(urlopen(result["catalog"]))
-                    
+                    cat = json.loads(urlopen(result["catalog"]).read().decode('utf-8'))
+
                     def filldefault(depends):
                         for module, opts in depends.items():
                             name = opts.get("name", module.split("/")[-1])
