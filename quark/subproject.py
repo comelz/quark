@@ -93,8 +93,8 @@ class Subproject:
                     children_conf = [join(parent.directory, dependency_file) for parent in mod.parents]
                     parent_conf = join(parent.directory, dependency_file)
                     raise ValueError("Conflicting value of 'exclude_from_cmake'"
-                                     " attribute for module '%s': '%s' required by %s and %s required by %s" %
-                                     (name, str(mod.exclude_from_cmake), children_conf, str(parent.exclude_from_cmake),
+                                     " attribute for module '%s': %r required by %s and %r required by %s" %
+                                     (name, mod.exclude_from_cmake, children_conf, newmodule.exclude_from_cmake,
                                       parent_conf)
                                      )
                 if not newmodule.same_checkout(mod) and uri is not None:
