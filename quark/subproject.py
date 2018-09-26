@@ -324,7 +324,14 @@ class SvnSubproject(Subproject):
             logger.warning("Directory '%s' contains local modifications" % self.directory)
         else:
             with cd(self.directory):
-                fork(['svn', 'switch', self.url.geturl()])
+                # svn switch _would be ok_ even just to perform an update, but,
+                # unlike svn up, it touches the timestamp of all the files,
+                # forcing full rebuilds; so, if we are already on the correct
+                # url just use svn up
+                if self.url.geturl() == self.url_from_checkout(include_commit = False):
+                    fork(['svn', 'up'])
+                else:
+                    fork(['svn', 'switch', self.url.geturl()])
 
     def status(self):
         fork(['svn', 'status', self.directory])
