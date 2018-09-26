@@ -185,8 +185,8 @@ class Subproject:
     def local_edit(self):
         raise NotImplementedError()
 
-    def url_from_checkout(self):
-        raise NotImplementedError()
+    def url_from_checkout(self, *args, **kwargs):
+        return self.url_from_directory(directory = self.directory, *args, **kwargs)
 
     def mirror(self, dest):
         raise NotImplementedError()
@@ -264,9 +264,6 @@ class GitSubproject(Subproject):
         if include_commit:
             ret += '#commit=%s' % (commit,)
         return ret
-
-    def url_from_checkout(self):
-        return self.url_from_directory(self.directory)
 
     def mirror(self, dst_dir):
         source_dir = self.directory
@@ -347,9 +344,6 @@ class SvnSubproject(Subproject):
         if include_commit:
             ret += "@" + doc.findall('./entry/commit')[0].get('revision')
         return ret
-
-    def url_from_checkout(self):
-        return self.url_from_directory(self.directory)
 
     def mirror(self, dst, quick = False):
         import shutil
