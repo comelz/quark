@@ -185,8 +185,8 @@ class Subproject:
     def local_edit(self):
         raise NotImplementedError()
 
-    def url_from_checkout(self):
-        raise NotImplementedError()
+    def url_from_checkout(self, *args, **kwargs):
+        return self.url_from_directory(directory = self.directory, *args, **kwargs)
 
     def mirror(self, dest):
         raise NotImplementedError()
@@ -265,9 +265,6 @@ class GitSubproject(Subproject):
             ret += '#commit=%s' % (commit,)
         return ret
 
-    def url_from_checkout(self):
-        return self.url_from_directory(self.directory)
-
     def mirror(self, dst_dir):
         source_dir = self.directory
         def mkdir_p(path):
@@ -327,7 +324,14 @@ class SvnSubproject(Subproject):
             logger.warning("Directory '%s' contains local modifications" % self.directory)
         else:
             with cd(self.directory):
-                fork(['svn', 'switch', self.url.geturl()])
+                # svn switch _would be ok_ even just to perform an update, but,
+                # unlike svn up, it touches the timestamp of all the files,
+                # forcing full rebuilds; so, if we are already on the correct
+                # url just use svn up
+                if self.url.geturl() == self.url_from_checkout(include_commit = False):
+                    fork(['svn', 'up'])
+                else:
+                    fork(['svn', 'switch', self.url.geturl()])
 
     def status(self):
         fork(['svn', 'status', self.directory])
@@ -347,9 +351,6 @@ class SvnSubproject(Subproject):
         if include_commit:
             ret += "@" + doc.findall('./entry/commit')[0].get('revision')
         return ret
-
-    def url_from_checkout(self):
-        return self.url_from_directory(self.directory)
 
     def mirror(self, dst, quick = False):
         import shutil
