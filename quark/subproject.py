@@ -3,7 +3,7 @@ import json
 import os
 from os.path import exists, join, isdir
 from shutil import rmtree
-from subprocess import check_output, call, PIPE, Popen, check_call, CalledProcessError, run
+from subprocess import check_output, call, PIPE, Popen, CalledProcessError, run
 from urllib.parse import urlparse
 import shutil
 
