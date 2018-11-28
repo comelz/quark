@@ -3,13 +3,13 @@ import json
 import os
 from os.path import exists, join, isdir
 from shutil import rmtree
-from subprocess import check_output, call, PIPE, Popen, CalledProcessError, run
+from subprocess import call, PIPE, Popen, CalledProcessError, run
 from urllib.parse import urlparse
 import shutil
 
 import xml.etree.ElementTree as ElementTree
 
-from quark.utils import DirectoryContext as cd, fork
+from quark.utils import DirectoryContext as cd, fork, log_check_output
 from quark.utils import freeze_file, dependency_file, mkdir, load_conf
 
 logger = logging.getLogger(__name__)
@@ -220,7 +220,7 @@ class GitSubproject(Subproject):
 
     def check_origin(self):
         with cd(self.directory):
-            if check_output(['git', 'config', '--get', 'remote.origin.url']) != self.url:
+            if log_check_output(['git', 'config', '--get', 'remote.origin.url']) != self.url:
                 if not self.has_local_edit():
                     logger.warning("%s is not a clone of %s "
                                    "but it hasn't local modifications, "
@@ -253,13 +253,13 @@ class GitSubproject(Subproject):
 
     def has_local_edit(self):
         with cd(self.directory):
-            return check_output(['git', 'status', '--porcelain']) != b""
+            return log_check_output(['git', 'status', '--porcelain']) != b""
 
     @staticmethod
     def url_from_directory(directory, include_commit = True):
         with cd(directory):
-            origin = check_output(['git', 'remote', 'get-url', 'origin'], universal_newlines=True)[:-1]
-            commit = check_output(['git', 'log', '-1', '--format=%H'], universal_newlines=True)[:-1]
+            origin = log_check_output(['git', 'remote', 'get-url', 'origin'], universal_newlines=True)[:-1]
+            commit = log_check_output(['git', 'log', '-1', '--format=%H'], universal_newlines=True)[:-1]
         ret = 'git+%s' % (origin,)
         if include_commit:
             ret += '#commit=%s' % (commit,)
@@ -337,7 +337,7 @@ class SvnSubproject(Subproject):
         fork(['svn', 'status', self.directory])
 
     def has_local_edit(self):
-        xml = check_output(['svn', 'st', '--xml', self.directory], universal_newlines=True)
+        xml = log_check_output(['svn', 'st', '--xml', self.directory], universal_newlines=True)
         doc = ElementTree.fromstring(xml)
         for entry in doc.findall('./status/target/entry[@path="%s"]/entry[@item="modified"]' % self.directory):
             return True
@@ -345,7 +345,7 @@ class SvnSubproject(Subproject):
 
     @staticmethod
     def url_from_directory(directory, include_commit = True):
-        xml = check_output(['svn', 'info', '--xml', directory], universal_newlines=True)
+        xml = log_check_output(['svn', 'info', '--xml', directory], universal_newlines=True)
         doc = ElementTree.fromstring(xml)
         ret = doc.findall('./entry/url')[0].text
         if include_commit:

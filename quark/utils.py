@@ -55,13 +55,29 @@ def load_conf(folder):
     else:
         return None
 
+def print_cmd(cmd, comment = "", stream = sys.stdout):
+    if comment:
+        comment = " (" + comment + ")"
+    green = reset = blue = ""
+    if os.isatty(stream.fileno()):
+        green = "\x1b[32m"
+        reset = "\x1b[30m\x1b(B\x1b[m"
+        blue  = "\x1b[34m"
+    stream.write(
+        "quark: " +
+        green + os.getcwd() + reset + '$ ' +
+        ' '.join(cmd) +
+        blue + comment +
+        reset + "\n")
+    stream.flush()
+
 def fork(*args, **kwargs):
-    fmt = "%s$ %s\n"
-    if os.isatty(sys.stdout.fileno()):
-        fmt = "\x1b[32m%s\x1b[30m\x1b(B\x1b[m$ %s\n"
-    sys.stdout.write(fmt % (os.getcwd(), ' '.join(args[0])))
-    sys.stdout.flush()
+    print_cmd(args[0])
     return subprocess.check_call(*args, **kwargs)
+
+def log_check_output(*args, **kwargs):
+    print_cmd(args[0], "captured")
+    return subprocess.check_output(*args, **kwargs)
 
 def parse_option(s):
     eq = s.find('=')
