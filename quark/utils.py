@@ -56,7 +56,10 @@ def load_conf(folder):
         return None
 
 def fork(*args, **kwargs):
-    sys.stdout.write(' '.join(args[0]) + '\n')
+    fmt = "%s$ %s\n"
+    if os.isatty(sys.stdout.fileno()):
+        fmt = "\x1b[32m%s\x1b[30m\x1b(B\x1b[m$ %s\n"
+    sys.stdout.write(fmt % (os.getcwd(), ' '.join(args[0])))
     sys.stdout.flush()
     return subprocess.check_call(*args, **kwargs)
 
