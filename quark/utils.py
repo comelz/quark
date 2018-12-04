@@ -58,13 +58,14 @@ def load_conf(folder):
 def print_cmd(cmd, comment = "", stream = sys.stdout):
     if comment:
         comment = " (" + comment + ")"
-    green = reset = blue = ""
+    yellow = green = reset = blue = ""
     if os.isatty(stream.fileno()):
+        yellow = "\x1b[33m"
         green = "\x1b[32m"
         reset = "\x1b[30m\x1b(B\x1b[m"
         blue  = "\x1b[34m"
     stream.write(
-        "quark: " +
+        yellow + "quark: " +
         green + os.getcwd() + reset + '$ ' +
         ' '.join(cmd) +
         blue + comment +
