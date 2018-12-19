@@ -39,12 +39,12 @@ class Subproject:
         return res
 
     @staticmethod
-    def create(name, urlstring, directory, options, **kwargs):
+    def create(name, urlstring, directory, options, conf = {}, **kwargs):
         url = urlparse(urlstring)
         args = (name, url, directory, options)
         if urlstring is None:
             # fake project, used for non-versioned root
-            res = Subproject(name, directory, options, **kwargs)
+            res = Subproject(name, directory, options, conf, **kwargs)
         elif url.scheme.startswith('git'):
             res = GitSubproject(*args, **kwargs)
         elif url.scheme.startswith('svn'):
@@ -56,7 +56,7 @@ class Subproject:
 
     @staticmethod
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
-        root = Subproject.create("root", url, source_dir, {}, toplevel = True)
+        root = Subproject.create("root", url, source_dir, {}, {}, toplevel = True)
         if url and update:
             root.checkout()
         conf = load_conf(source_dir)
@@ -78,11 +78,11 @@ class Subproject:
                     err = e
             raise err
 
-        def add_module(parent, name, uri, options, **kwargs):
+        def add_module(parent, name, uri, options, conf, **kwargs):
             if uri is None:
                 # options add only, lookup from existing modules
                 uri = modules[name].urlstring
-            newmodule = Subproject.create(name, uri, join(subproject_dir, name), options, **kwargs)
+            newmodule = Subproject.create(name, uri, join(subproject_dir, name), options, conf, **kwargs)
             mod = modules.setdefault(name, newmodule)
             if mod is newmodule:
                 mod.parents.add(parent)
@@ -139,8 +139,9 @@ class Subproject:
                     external_project = depobject.get('external_project', False)
                     add_module(current_module, name,
                                freeze_dict.get(name, depobject.get('url', None)), depobject.get('options', {}),
+                               depobject,
                                exclude_from_cmake=depobject.get('exclude_from_cmake', external_project),
-                               external_project=external_project
+                               external_project=external_project,
                                )
                 for key, optobjects in conf.get('optdepends', {}).items():
                     if isinstance(optobjects, dict):
@@ -154,10 +155,12 @@ class Subproject:
                             for name, depobject in optobject['depends'].items():
                                 add_module(current_module, name,
                                            freeze_dict.get(name, depobject.get('url', None)),
-                                           depobject.get('options', {}))
+                                           depobject.get('options', {}),
+                                           depobject)
         return root, modules
 
-    def __init__(self, name=None, directory=None, options=None, exclude_from_cmake=False, external_project=False, toplevel = False):
+    def __init__(self, name=None, directory=None, options=None, conf = {}, exclude_from_cmake=False, external_project=False, toplevel = False):
+        self.conf = conf
         self.parents = set()
         self.children = set()
         self.name = name
@@ -214,7 +217,7 @@ class GitSubproject(Subproject):
         self.url = url._replace(fragment='')._replace(scheme=url.scheme.replace('git+', ''))
 
     def same_checkout(self, other):
-        if isinstance(other, GitSubproject) and (self.url, self.ref) == (other.url, other.ref):
+        if isinstance(other, GitSubproject) and (self.url, self.ref, self.conf.get("shallow", False)) == (other.url, other.ref, other.conf.get("shallow", False)):
             return True
         return False
 
@@ -234,7 +237,10 @@ class GitSubproject(Subproject):
                         self.directory, self.url.geturl())
 
     def checkout(self):
-        fork(['git', 'clone', '-n', '--', self.url.geturl(), self.directory])
+        extra_opts = []
+        if self.conf.get("shallow", False):
+            extra_opts = ["--depth", "1"]
+        fork(['git', 'clone', '-n'] + extra_opts + [ '--', self.url.geturl(), self.directory])
         with cd(self.directory):
            fork(['git', 'checkout', self.ref])
 
