@@ -203,8 +203,9 @@ class Subproject:
 
 
 class GitSubproject(Subproject):
-    def __init__(self, name, url, directory, options, **kwargs):
-        super().__init__(name, directory, options, **kwargs)
+    def __init__(self, name, url, directory, options, conf = {}, **kwargs):
+        print(conf)
+        super().__init__(name, directory, options, conf, **kwargs)
         self.ref = 'origin/HEAD'
         if url.fragment:
             fragment = Subproject._parse_fragment(url)
@@ -297,8 +298,8 @@ class GitSubproject(Subproject):
                 cp(t, os.path.join(dst_dir, t.decode()))
 
 class SvnSubproject(Subproject):
-    def __init__(self, name, url, directory, options, **kwargs):
-        super().__init__(name, directory, options, **kwargs)
+    def __init__(self, name, url, directory, options, conf = {}, **kwargs):
+        super().__init__(name, directory, options, conf = {}, **kwargs)
         self.rev = 'HEAD'
         fragment = (url.fragment and Subproject._parse_fragment(url)) or {}
         rev = fragment.get('rev', None)
