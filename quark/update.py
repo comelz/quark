@@ -11,8 +11,10 @@ def run():
                         help="Print dependency tree in JSON format")
     parser.add_argument("-o", "--options", action='append',
                     help="set option value (will be taken into account when downloading optional dependencies)")
-    parser.add_argument("-d", "--deps-only", action='store_true',
-            help="Update only dependencies, ignore the root project")
+    parser.add_argument("-d", "--deps-only", action='store_true', default=True,
+            help="Update only dependencies, ignore the root project; this is " +
+            "the default behavior, so this option now has no effect and is kept " +
+            "only for compatibility with older scripts")
     optlist = parser.parse_args()
     source_dir = optlist.source_directory or getcwd()
     options = {}
