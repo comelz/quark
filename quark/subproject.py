@@ -41,7 +41,7 @@ class Subproject:
     @staticmethod
     def create(name, urlstring, directory, options, conf = {}, **kwargs):
         url = urlparse(urlstring)
-        args = (name, url, directory, options)
+        args = (name, url, directory, options, conf)
         if urlstring is None:
             # fake project, used for non-versioned root
             res = Subproject(name, directory, options, conf, **kwargs)
