@@ -5,7 +5,7 @@ Quark is a simple project dependency management that works at source code level.
 ## Commands
 
 ```
-usage: quark-co [-h] [-v] [-o OPTIONS] [URL] [SOURCE_DIR]
+usage: quark co [-h] [-v] [-o OPTIONS] [URL] [SOURCE_DIR]
 
 Download a project source tree with all dependencies
 
@@ -22,7 +22,7 @@ optional arguments:
 
 ```
 ```
-usage: quark-fz [-h] [SOURCE_DIR]
+usage: quark freeze [-h] [SOURCE_DIR]
 
 Freeze a project dependencies
 
@@ -30,7 +30,7 @@ positional arguments:
   SOURCE_DIR  Specify the source directory
 ```
 ```
-usage: quark-st [-h] [SOURCE_DIR]
+usage: quark status [-h] [SOURCE_DIR]
 
 Check a project status
 
@@ -38,7 +38,7 @@ positional arguments:
   SOURCE_DIR  Specify the source directory
 ```
 ```
-usage: quark-up [-h] [-v] [-o OPTIONS] [-d] [SOURCE_DIR]
+usage: quark up [-h] [-v] [-o OPTIONS] [-d] [SOURCE_DIR]
 
 Update all dependencies in a project source tree
 
