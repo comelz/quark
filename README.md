@@ -51,7 +51,10 @@ optional arguments:
   -o OPTIONS, --options OPTIONS
                         set option value (will be taken into account when
                         downloading optional dependencies)
-  -d, --deps-only       Update only dependencies, ignore the root project
+  -d, --deps-only       Update only dependencies, ignore the root project;
+                        this is the default behavior, so this option now has
+                        no effect and is kept only for compatibility with
+                        older scripts
 ```
 
 ## Config files
