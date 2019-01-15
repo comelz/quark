@@ -56,7 +56,7 @@ optional arguments:
 
 ## Config files
 
-Each package in `quark` can list it's own dependency in a `subprojects.quark` file:
+Each package in `quark` can list its own dependency in a `subprojects.quark` file:
 
 ```json
 {
