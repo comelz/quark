@@ -204,7 +204,6 @@ class Subproject:
 
 class GitSubproject(Subproject):
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
-        print(conf)
         super().__init__(name, directory, options, conf, **kwargs)
         self.ref = 'origin/HEAD'
         if url.fragment:
