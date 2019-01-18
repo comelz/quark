@@ -334,30 +334,15 @@ class SvnSubproject(Subproject):
                 # unlike svn up, it touches the timestamp of all the files,
                 # forcing full rebuilds; so, if we are already on the correct
                 # url just use svn up
-                target_base,target_rev = (self.url.geturl().split('@') + [''])[:2]
-                if self.url.geturl() == self.url_from_checkout(include_commit = False):
-                    fork(['svn', 'up'])
-                elif self.url.geturl() == self.url_from_checkout(include_commit = True):
-                    # Optimization for another common case: if we are already
-                    # there, just do an svn up with the appropriate revision
 
-                    # We cannot skip this outright, because we are still
-                    # interested in svn up side effects (such as restoring
-                    # deleted files); at the same time, we cannot extend this
-                    # optimization to the general case (even if the URL for the
-                    # rest is the same), as -r and pegged revisions can resolve
-                    # to completely different trees in case of forks/moves
-                    fork(['svn', 'up', '-r' + target_rev])
+                # Notice that, unlike other svn commands, -r in svn up works as
+                # a peg revision (the @ syntax), so it takes the URL of the
+                # current working copy and looks it up in the repository _as it
+                # was at the requested revision_ (or HEAD if none is specified)
+                target_base,target_rev = (self.url.geturl().split('@') + [''])[:2]
+                if target_base == self.url_from_checkout(include_commit = False):
+                    fork(['svn', 'up'] + (["-r" + target_rev] if target_rev else []))
                 else:
-                    if target_rev:
-                        # Last desperate check to avoid a switch: let's check
-                        # if the pegged revision actually points to our tree
-                        xml = log_check_output(['svn', 'info', '--xml', self.url.geturl()], universal_newlines=True)
-                        doc = ElementTree.fromstring(xml)
-                        url_at_rev = doc.findall('./entry/url')[0].text
-                        if url_at_rev == target_base:
-                            fork(['svn', 'up', '-r' + target_rev])
-                            return
                     fork(['svn', 'switch', self.url.geturl()])
 
     def status(self):
