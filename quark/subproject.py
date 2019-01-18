@@ -336,6 +336,17 @@ class SvnSubproject(Subproject):
                 # url just use svn up
                 if self.url.geturl() == self.url_from_checkout(include_commit = False):
                     fork(['svn', 'up'])
+                elif self.url.geturl() == self.url_from_checkout(include_commit = True):
+                    # Optimization for another common case: if we are already
+                    # there, just do an svn up with the appropriate revision
+
+                    # We cannot skip this outright, because we are still
+                    # interested in svn up side effects (such as restoring
+                    # deleted files); at the same time, we cannot extend this
+                    # optimization to the general case (even if the URL for the
+                    # rest is the same), as -r and pegged revisions can resolve
+                    # to completely different trees in case of forks/moves
+                    fork(['svn', 'up', '-r' + self.url.path.split('@')[-1]])
                 else:
                     fork(['svn', 'switch', self.url.geturl()])
 
