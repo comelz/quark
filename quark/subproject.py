@@ -334,8 +334,14 @@ class SvnSubproject(Subproject):
                 # unlike svn up, it touches the timestamp of all the files,
                 # forcing full rebuilds; so, if we are already on the correct
                 # url just use svn up
-                if self.url.geturl() == self.url_from_checkout(include_commit = False):
-                    fork(['svn', 'up'])
+
+                # Notice that, unlike other svn commands, -r in svn up works as
+                # a peg revision (the @ syntax), so it takes the URL of the
+                # current working copy and looks it up in the repository _as it
+                # was at the requested revision_ (or HEAD if none is specified)
+                target_base,target_rev = (self.url.geturl().split('@') + [''])[:2]
+                if target_base == self.url_from_checkout(include_commit = False):
+                    fork(['svn', 'up'] + (["-r" + target_rev] if target_rev else []))
                 else:
                     fork(['svn', 'switch', self.url.geturl()])
 
