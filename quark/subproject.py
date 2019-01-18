@@ -334,6 +334,7 @@ class SvnSubproject(Subproject):
                 # unlike svn up, it touches the timestamp of all the files,
                 # forcing full rebuilds; so, if we are already on the correct
                 # url just use svn up
+                target_base,target_rev = (self.url.geturl().split('@') + [''])[:2]
                 if self.url.geturl() == self.url_from_checkout(include_commit = False):
                     fork(['svn', 'up'])
                 elif self.url.geturl() == self.url_from_checkout(include_commit = True):
@@ -346,8 +347,17 @@ class SvnSubproject(Subproject):
                     # optimization to the general case (even if the URL for the
                     # rest is the same), as -r and pegged revisions can resolve
                     # to completely different trees in case of forks/moves
-                    fork(['svn', 'up', '-r' + self.url.path.split('@')[-1]])
+                    fork(['svn', 'up', '-r' + target_rev])
                 else:
+                    if target_rev:
+                        # Last desperate check to avoid a switch: let's check
+                        # if the pegged revision actually points to our tree
+                        xml = log_check_output(['svn', 'info', '--xml', self.url.geturl()], universal_newlines=True)
+                        doc = ElementTree.fromstring(xml)
+                        url_at_rev = doc.findall('./entry/url')[0].text
+                        if url_at_rev == target_base:
+                            fork(['svn', 'up', '-r' + target_rev])
+                            return
                     fork(['svn', 'switch', self.url.geturl()])
 
     def status(self):
