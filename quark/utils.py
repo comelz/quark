@@ -20,10 +20,10 @@ def workaround_url_read(url):
     certificate stores.
 
     On many Python installations, urllib has problems using the system
-    certificate stores this seems to be particularly true on macOS, in a
-    twisted way on Win32 and can be a problem depending on some Linux distros
-    (where in general the very definition of "system certificates store" is
-    somewhat confused); for the horrible details, see
+    certificate stores; this seems to be particularly true on macOS, it is so
+    in a twisted way on Win32 and can be a problem on some Linux distros (where
+    in general the very definition of "system certificates store" is somewhat
+    confused). For the horrible details, see:
 
     https://stackoverflow.com/a/42107877/214671
     https://stackoverflow.com/q/52074590/214671
