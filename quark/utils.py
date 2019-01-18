@@ -8,12 +8,56 @@ import json
 import logging
 import errno
 import copy
-from urllib.request import urlopen
 
 dependency_file = 'subprojects.quark'
 freeze_file = 'freeze.quark'
 logger = logging.getLogger(__name__)
 catalog_cache = {}
+
+def workaround_url_read(url):
+    """
+    Tries to perform an urlopen(url).read(), with workarounds for broken
+    certificate stores.
+
+    On many Python installations, urllib has problems using the system
+    certificate stores this seems to be particularly true on macOS, in a
+    twisted way on Win32 and can be a problem depending on some Linux distros
+    (where in general the very definition of "system certificates store" is
+    somewhat confused); for the horrible details, see
+
+    https://stackoverflow.com/a/42107877/214671
+    https://stackoverflow.com/q/52074590/214671
+
+    A possibility could be to require the certifi package and use the
+    certificates it provides (as requests does), but it's yet another thing to
+    install and, most importantly, to keep updated (those pesky certificates do
+    love to expire).
+
+    On the other hand, on pretty much every macOS (and Linux) machine there's
+    some system-provided cURL command-line tool that should work fine with the
+    system certificate store; so, if urllib fails due to SSL errors, we try
+    that route as well.
+    """
+    from urllib.request import urlopen
+    from urllib.error import URLError
+    try:
+        return urlopen(url).read()
+    except URLError as ex:
+        import ssl
+        if len(ex.args) and isinstance(ex.args[0], ssl.SSLError):
+            logger.warn("SSL error reading catalog file %s, trying with command-line curl..." % url)
+            def curl_url_read(url):
+                return log_check_output(["curl", "-s", url])
+
+            try:
+                # Try with command-line cURL
+                return curl_url_read(url)
+            except:
+                # Re-raise original exception - maybe SSL _is_ broken after all
+                raise ex
+            # It worked out fine, don't waste time with urllib in the future
+            workaround_url_read = curl_url_read
+        raise
 
 def load_conf(folder):
     filepath = path.join(folder, dependency_file)
@@ -29,7 +73,7 @@ def load_conf(folder):
                     # The catalog is often the same for all dependencies, don't
                     # hammer the server *and* make sure we have a coherent view
                     if catalog_url not in catalog_cache:
-                        catalog_cache[catalog_url] = json.loads(urlopen(result["catalog"]).read().decode('utf-8'))
+                        catalog_cache[catalog_url] = json.loads(workaround_url_read(catalog_url).decode('utf-8'))
                     cat = catalog_cache[catalog_url]
 
                     def filldefault(depends):
