@@ -26,6 +26,22 @@ def url_from_directory(directory, include_commit = True):
         raise QuarkError("Couldn't detect repository type for directory %s" % directory)
     return cls.url_from_directory(directory, include_commit)
 
+def not_a_project(directory, proj_type):
+    raise QuarkError("""
+
+Directory '%s' isn't a %s sandbox,
+but it's marked as such in a subproject.quark.
+
+Either:
+- it was previously a subproject of a different kind (e.g. the catalog changed
+  it from Subversion to Git);
+- it's committed in the root project;
+- it's a local modification.
+
+Please remove it and re-run quark up.
+""" % (directory, proj_type))
+
+
 
 class Subproject:
     @staticmethod
@@ -247,6 +263,8 @@ class GitSubproject(Subproject):
     def update(self):
         if not exists(self.directory):
             self.checkout()
+        elif not exists(self.directory + "/.git"):
+            not_a_project(self.directory, "Git")
         elif self.has_local_edit():
             logger.warning("Directory '%s' contains local modifications" % self.directory)
         else:
@@ -326,6 +344,8 @@ class SvnSubproject(Subproject):
     def update(self):
         if not exists(self.directory):
             self.checkout()
+        elif not exists(self.directory + "/.svn"):
+            not_a_project(self.directory, "Subversion")
         elif self.has_local_edit():
             logger.warning("Directory '%s' contains local modifications" % self.directory)
         else:
