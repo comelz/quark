@@ -280,7 +280,7 @@ class GitSubproject(Subproject):
                 extra_opts += ["--depth", "1"]
             # Needed essentially for the shallow case, as for full clones the
             # git clone -n + git checkout would suffice
-            if self.ref != 'origin/HEAD':
+            if not self.ref_is_commit and self.ref != 'origin/HEAD':
                 extra_opts += ['-b', self.noremote_ref()]
             fork(['git', 'clone', '-n'] + extra_opts + ['--', self.url.geturl(), self.directory])
             with cd(self.directory):
