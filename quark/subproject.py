@@ -254,23 +254,37 @@ class GitSubproject(Subproject):
                         " modifications, I don't know what to do with it..." %
                         self.directory, self.url.geturl())
 
+    def noremote_ref(self):
+        nr_ref = self.ref
+        if '/' in nr_ref:
+            nr_ref = nr_ref.split('/', 1)[1]
+        return nr_ref
+
+
     def checkout(self):
-        shallow_opts = []
         shallow = self.conf.get("shallow", False)
-        if shallow:
-            shallow_opts = ["--depth", "1"]
-        if not self.ref_is_commit:
-            fork(['git', 'clone', '-n'] + shallow_opts + [ '--', self.url.geturl(), self.directory])
-        else:
+
+        if self.ref_is_commit and shallow:
+            # We cannot straight clone a shallow repo using a commit hash (-b doesn't support it)
+            # do the dance described at https://stackoverflow.com/a/43136160/214671
             os.mkdir(self.directory)
             with cd(self.directory):
                 fork(['git', 'init'])
                 fork(['git', 'remote', 'add', 'origin', self.url.geturl()])
-                fetch_cmd = ['git', 'fetch'] + shallow_opts
-                if shallow:
-                    fetch_cmd += ['origin', self.ref]
-                fork(fetch_cmd)
+                fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
                 fork(['git', 'checkout', self.ref])
+        else:
+            # Regular case
+            extra_opts = []
+            if shallow:
+                extra_opts += ["--depth", "1"]
+            # Needed essentially for the shallow case, as for full clones the
+            # git clone -n + git checkout would suffice
+            if self.ref != 'origin/HEAD':
+                extra_opts += ['-b', self.noremote_ref]
+            fork(['git', 'clone', '-n'] + extra_opts + ['--', self.url.geturl(), self.directory])
+            with cd(self.directory):
+                fork(['git', 'checkout', self.ref, '--'])
 
     def update(self):
         if not exists(self.directory):
@@ -281,8 +295,15 @@ class GitSubproject(Subproject):
             logger.warning("Directory '%s' contains local modifications" % self.directory)
         else:
             with cd(self.directory):
-                fork(['git', 'fetch'])
-                fork(['git', 'checkout', self.ref, '--'])
+                if self.conf.get("shallow", False):
+                    # Fetch just the commit we need
+                    fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
+                    # Notice that we need FETCH_HEAD, as the shallow clone does not recognize
+                    # origin/HEAD & co.
+                    fork(['git', 'checkout', 'FETCH_HEAD', '--'])
+                else:
+                    fork(['git', 'fetch'])
+                    fork(['git', 'checkout', self.ref, '--'])
 
     def status(self):
         fork(['git', "--git-dir=%s/.git" % self.directory, "--work-tree=%s" % self.directory, 'status'])
