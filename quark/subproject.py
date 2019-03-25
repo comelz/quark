@@ -221,11 +221,13 @@ class Subproject:
 class GitSubproject(Subproject):
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf, **kwargs)
+        self.ref_is_commit = False
         self.ref = 'origin/HEAD'
         if url.fragment:
             fragment = Subproject._parse_fragment(url)
             if 'commit' in fragment:
                 self.ref = fragment['commit']
+                self.ref_is_commit = True
             elif 'tag' in fragment:
                 self.ref = fragment['tag']
             elif 'branch' in fragment:
@@ -253,12 +255,22 @@ class GitSubproject(Subproject):
                         self.directory, self.url.geturl())
 
     def checkout(self):
-        extra_opts = []
-        if self.conf.get("shallow", False):
-            extra_opts = ["--depth", "1"]
-        fork(['git', 'clone', '-n'] + extra_opts + [ '--', self.url.geturl(), self.directory])
-        with cd(self.directory):
-           fork(['git', 'checkout', self.ref])
+        shallow_opts = []
+        shallow = self.conf.get("shallow", False)
+        if shallow:
+            shallow_opts = ["--depth", "1"]
+        if not self.ref_is_commit:
+            fork(['git', 'clone', '-n'] + shallow_opts + [ '--', self.url.geturl(), self.directory])
+        else:
+            os.mkdir(self.directory)
+            with cd(self.directory):
+                fork(['git', 'init'])
+                fork(['git', 'remote', 'add', 'origin', self.url.geturl()])
+                fetch_cmd = ['git', 'fetch'] + shallow_opts
+                if shallow:
+                    fetch_cmd += ['origin', self.ref]
+                fork(fetch_cmd)
+                fork(['git', 'checkout', self.ref])
 
     def update(self):
         if not exists(self.directory):
