@@ -281,7 +281,7 @@ class GitSubproject(Subproject):
             # Needed essentially for the shallow case, as for full clones the
             # git clone -n + git checkout would suffice
             if self.ref != 'origin/HEAD':
-                extra_opts += ['-b', self.noremote_ref]
+                extra_opts += ['-b', self.noremote_ref()]
             fork(['git', 'clone', '-n'] + extra_opts + ['--', self.url.geturl(), self.directory])
             with cd(self.directory):
                 fork(['git', 'checkout', self.ref, '--'])
