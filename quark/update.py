@@ -21,7 +21,7 @@ def run():
     parser.add_argument("--catalog-override", metavar=("ORIGINAL_URL", "OVERRIDDEN_URL"), nargs=2,
             action="append", help="Overrides the specified catalog URL with the provided one")
     parser.add_argument("-C", "--clean", action='store_true', default=False,
-            help="[git only] Clean the dendency directory if has local modifications")
+            help="Clean the dendency directory if has local modifications")
     optlist = parser.parse_args()
     source_dir = optlist.source_directory or getcwd()
     options = {}

@@ -411,10 +411,14 @@ class SvnSubproject(Subproject):
             self.checkout()
         elif not exists(self.directory + "/.svn"):
             not_a_project(self.directory, "Subversion")
-        elif self.has_local_edit():
-            logger.warning("Directory '%s' contains local modifications" % self.directory)
         else:
             with cd(self.directory):
+                if self.has_local_edit():
+                    if clean:
+                        fork(['svn', 'revert', '-R', '.'])
+                        fork(['svn', 'cleanup', '--remove-unversioned', '.'])
+                    else:
+                        logger.warning("Directory '%s' contains local modifications" % self.directory)
                 # svn switch _would be ok_ even just to perform an update, but,
                 # unlike svn up, it touches the timestamp of all the files,
                 # forcing full rebuilds; so, if we are already on the correct
