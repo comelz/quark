@@ -249,21 +249,6 @@ class GitSubproject(Subproject):
             return True
         return False
 
-    def check_origin(self):
-        with cd(self.directory):
-            if log_check_output(['git', 'config', '--get', 'remote.origin.url']) != self.url:
-                if not self.has_local_edit():
-                    logger.warning("%s is not a clone of %s "
-                                   "but it hasn't local modifications, "
-                                   "removing it..", self.directory, self.url.geturl())
-                    rmtree(self.directory)
-                    self.checkout()
-                else:
-                    raise ValueError(
-                        "'%s' is not a clone of '%s' and has local"
-                        " modifications, I don't know what to do with it..." %
-                        self.directory, self.url.geturl())
-
     def noremote_ref(self):
         nr_ref = self.ref
         if '/' in nr_ref:
@@ -299,6 +284,23 @@ class GitSubproject(Subproject):
     def update(self, clean=False):
         def actualUpdate():
             with cd(self.directory):
+                try:
+                    current_origin = log_check_output(['git', 'config', '--get', 'remote.origin.url']).strip().decode('utf-8')
+                except CalledProcessError:
+                    current_origin = None
+                if current_origin != self.url.geturl():
+                    # For now we just throw a fit; it shouldn't happen often,
+                    # and in this case there's no "right" answer - the repo may
+                    # have just moved, or we may be dealing with a completely
+                    # unrelated repo.
+                    # In future, it would be nice to be a bit more interactive
+                    raise QuarkError("""
+
+Directory '%s' is a git repository,
+but its remote 'origin' (%r)
+does not match what we expect (%r).
+
+Please either remove the local clone, or fix its remote.""" % (self.directory, current_origin, self.url.geturl()))
                 if self.conf.get("shallow", False):
                     # Fetch just the commit we need
                     fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
