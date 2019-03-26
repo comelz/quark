@@ -71,7 +71,7 @@ class Subproject:
         return res
 
     @staticmethod
-    def create_dependency_tree(source_dir, url=None, options=None, update=False):
+    def create_dependency_tree(source_dir, url=None, options=None, update=False, clean=False):
         # make sure the separator is present
         source_dir_rp = os.path.join(os.path.abspath(source_dir), '')
         root = Subproject.create("root", url, source_dir, {}, {}, toplevel = True)
@@ -113,7 +113,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
             if mod is newmodule:
                 mod.parents.add(parent)
                 if update:
-                    mod.update()
+                    mod.update(clean)
             else:
                 if newmodule.exclude_from_cmake != mod.exclude_from_cmake:
                     children_conf = [join(parent.directory, dependency_file) for parent in mod.parents]
@@ -205,7 +205,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
     def checkout(self):
         raise NotImplementedError()
 
-    def update(self):
+    def update(self, clean=False):
         raise NotImplementedError()
 
     def status(self):
@@ -296,14 +296,8 @@ class GitSubproject(Subproject):
             with cd(self.directory):
                 fork(['git', 'checkout', self.ref, '--'])
 
-    def update(self):
-        if not exists(self.directory):
-            self.checkout()
-        elif not exists(self.directory + "/.git"):
-            not_a_project(self.directory, "Git")
-        elif self.has_local_edit():
-            logger.warning("Directory '%s' contains local modifications" % self.directory)
-        else:
+    def update(self, clean=False):
+        def actualUpdate():
             with cd(self.directory):
                 if self.conf.get("shallow", False):
                     # Fetch just the commit we need
@@ -314,6 +308,34 @@ class GitSubproject(Subproject):
                 else:
                     fork(['git', 'fetch'])
                     fork(['git', 'checkout', self.ref, '--'])
+
+        if not exists(self.directory):
+            self.checkout()
+        elif not exists(self.directory + "/.git"):
+            not_a_project(self.directory, "Git")
+        elif self.has_local_edit():
+            if clean:
+                self.clean_all()
+                actualUpdate()
+            else:
+                logger.warning("Directory '%s' contains local modifications" % self.directory)
+                self.stash()
+                actualUpdate()
+                self.pop()
+        else:
+            actualUpdate()
+
+    def stash(self):
+        with cd(self.directory):
+            fork(['git', 'stash', '--all'])
+
+    def pop(self):
+        with cd(self.directory):
+            fork(['git', 'stash', 'pop'])
+
+    def clean_all(self):
+        with cd(self.directory):
+            fork(['git', 'clean', '-fd'])
 
     def status(self):
         fork(['git', "--git-dir=%s/.git" % self.directory, "--work-tree=%s" % self.directory, 'status'])
@@ -384,7 +406,7 @@ class SvnSubproject(Subproject):
     def checkout(self):
         fork(['svn', 'checkout', self.url.geturl(), self.directory])
 
-    def update(self):
+    def update(self, clean=False):
         if not exists(self.directory):
             self.checkout()
         elif not exists(self.directory + "/.svn"):
@@ -467,8 +489,8 @@ class SvnSubproject(Subproject):
                     elif not quick or newer(fn1, fn2):
                         shutil.copy2(fn1, fn2)
 
-def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True):
-    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update)
+def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True, clean=False):
+    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update, clean=clean)
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
     conf = load_conf(source_dir)
