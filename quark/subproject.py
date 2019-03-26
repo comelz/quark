@@ -66,7 +66,7 @@ class Subproject:
         elif url.scheme.startswith('svn'):
             res = SvnSubproject(*args, **kwargs)
         else:
-            raise ValueError("Unrecognized dependency for url '%s'", urlstring)
+            raise ValueError("Unrecognized dependency for url '%s'" % (urlstring,))
         res.urlstring = urlstring
         return res
 
