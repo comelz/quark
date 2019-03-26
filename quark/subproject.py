@@ -73,7 +73,7 @@ class Subproject:
     @staticmethod
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
         # make sure the separator is present
-        source_dir_rp = os.path.join(os.path.realpath(source_dir), '')
+        source_dir_rp = os.path.join(os.path.abspath(source_dir), '')
         root = Subproject.create("root", url, source_dir, {}, {}, toplevel = True)
         if url and update:
             root.checkout()
@@ -101,13 +101,13 @@ class Subproject:
                 # options add only, lookup from existing modules
                 uri = modules[name].urlstring
             target_dir = join(subproject_dir, name)
-            target_dir_rp = os.path.join(os.path.realpath(target_dir), '')
+            target_dir_rp = os.path.join(os.path.abspath(target_dir), '')
             if not target_dir_rp.startswith(source_dir_rp):
                 raise QuarkError("""
 Subproject `%s` (URI: %s)
 is trying to escape from the main project directory (`%s`)
-subproject realpath:   %s
-main project realpath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_rp))
+subproject abspath:   %s
+main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_rp))
             newmodule = Subproject.create(name, uri, target_dir, options, conf, **kwargs)
             mod = modules.setdefault(name, newmodule)
             if mod is newmodule:
