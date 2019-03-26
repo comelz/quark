@@ -72,7 +72,8 @@ class Subproject:
 
     @staticmethod
     def create_dependency_tree(source_dir, url=None, options=None, update=False):
-        source_dir_rp = os.path.realpath(source_dir)
+        # make sure the separator is present
+        source_dir_rp = os.path.join(os.path.realpath(source_dir), '')
         root = Subproject.create("root", url, source_dir, {}, {}, toplevel = True)
         if url and update:
             root.checkout()
@@ -100,7 +101,7 @@ class Subproject:
                 # options add only, lookup from existing modules
                 uri = modules[name].urlstring
             target_dir = join(subproject_dir, name)
-            target_dir_rp = os.path.realpath(target_dir)
+            target_dir_rp = os.path.join(os.path.realpath(target_dir), '')
             if not target_dir_rp.startswith(source_dir_rp):
                 raise QuarkError("""
 Subproject `%s` (URI: %s)
