@@ -13,6 +13,7 @@ dependency_file = 'subprojects.quark'
 freeze_file = 'freeze.quark'
 logger = logging.getLogger(__name__)
 catalog_cache = {}
+catalog_urls_overrides = {}
 
 def workaround_url_read(url):
     """
@@ -69,6 +70,15 @@ def load_conf(folder):
                 if isinstance(result, dict) and "catalog" in result:
                     # Fill-in with default options from catalog
                     catalog_url = result["catalog"]
+
+                    # None is used as placeholder for the first fetched catalog
+                    if None in catalog_urls_overrides:
+                        catalog_urls_overrides[catalog_url] = catalog_urls_overrides[None]
+                        del catalog_urls_overrides[None]
+
+                    # If we have an override, use the overridden URL
+                    if catalog_url in catalog_urls_overrides:
+                        catalog_url = catalog_urls_overrides[catalog_url]
 
                     # The catalog is often the same for all dependencies, don't
                     # hammer the server *and* make sure we have a coherent view
