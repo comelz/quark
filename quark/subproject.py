@@ -436,9 +436,7 @@ class SvnSubproject(Subproject):
     def has_local_edit(self):
         xml = log_check_output(['svn', 'st', '--xml', self.directory], universal_newlines=True)
         doc = ElementTree.fromstring(xml)
-        for entry in doc.findall('./status/target/entry[@path="%s"]/entry[@item="modified"]' % self.directory):
-            return True
-        return False
+        return len(doc.findall('./target/entry/wc-status[@item="modified"]')) != 0
 
     @staticmethod
     def url_from_directory(directory, include_commit = True):
