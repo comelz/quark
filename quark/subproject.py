@@ -399,7 +399,16 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
         if modules:
             exclude_quark.append(BEGIN)
             for m in modules:
-                exclude_quark.append(os.path.normpath(os.path.join(subprojects_dir, m)))
+                # 1. normalize
+                # 2. make it relative to the root of the repo (so the repo is movable)
+                # 3. make sure it has a / at the end; this ensures that git treates it like a path
+                #    and not like a glob pattern
+                exclude_quark.append(
+                        os.path.join(
+                            os.path.relpath(
+                                os.path.normpath(m.directory),
+                                self.directory),
+                            ""))
             exclude_quark.append(os.path.join(subprojects_dir, "CMakeLists.txt"))
             exclude_quark.append(END)
         res = []
