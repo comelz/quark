@@ -75,7 +75,12 @@ class Subproject:
     def create_dependency_tree(source_dir, url=None, options=None, update=False, clean=False):
         # make sure the separator is present
         source_dir_rp = os.path.join(os.path.abspath(source_dir), '')
-        root = Subproject.create("root", url, source_dir, {}, {}, toplevel = True)
+        root_url = url
+        try:
+            root_url = url_from_directory(source_dir)
+        except QuarkError:
+            pass
+        root = Subproject.create("root", root_url, source_dir, {}, {}, toplevel = True)
         if url and update:
             root.checkout()
         conf = load_conf(source_dir)
