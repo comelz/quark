@@ -431,9 +431,7 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
         quark_exclude_path = exclude_path+".quark"
         with open(quark_exclude_path, "w") as f:
             f.write("\n".join(res))
-        shutil.copyfile(exclude_path, exclude_path+".bak")
         os.replace(quark_exclude_path, exclude_path)
-        os.remove(exclude_path+".bak")
 
 class SvnSubproject(Subproject):
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
