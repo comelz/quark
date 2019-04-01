@@ -398,42 +398,56 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
         exclude_path_dir = os.path.join(self.directory, ".git", "info")
         os.makedirs(exclude_path_dir, exist_ok = True)
         exclude_path = os.path.join(exclude_path_dir, "exclude")
-        exclude_quark = []
-        if modules:
-            exclude_quark.append(BEGIN)
-            for m in modules:
-                # 1. normalize
-                # 2. make it relative to the root of the repo (so the repo is movable)
-                # 3. make sure it has a / at the end; this ensures that git treates it like a path
-                #    and not like a glob pattern
-                exclude_quark.append(
-                        os.path.join(
-                            os.path.relpath(
-                                os.path.normpath(m.directory),
-                                self.directory),
-                            ""))
-            exclude_quark.append(os.path.join(subprojects_dir, "CMakeLists.txt"))
-            exclude_quark.append(END)
-        res = []
-        try:
-            with open(exclude_path, "r") as f:
-                skip=False
-                for L in f:
-                    L = L.strip()
-                    if L == BEGIN:
-                        skip = True
-                    if L == END:
-                        skip = False
-                        continue
-                    if skip:
-                        continue
-                    res.append(L)
-        except IOError:
-            pass
-        res.extend(exclude_quark)
+
         quark_exclude_path = exclude_path+".quark"
-        with open(quark_exclude_path, "w") as f:
-            f.write("\n".join(res))
+
+        written = False
+
+        def write_excludes(fd):
+            if modules:
+                fd.write(BEGIN + "\n")
+                for m in modules:
+                    # 1. normalize
+                    # 2. make it relative to the root of the repo (so the repo is movable)
+                    # 3. make sure it has a / at the end; this ensures that git treates it like a path
+                    #    and not like a glob pattern
+                    fd.write(
+                            os.path.join(
+                                os.path.relpath(
+                                    os.path.normpath(m.directory),
+                                    self.directory),
+                                "") + "\n")
+                fd.write(os.path.join(subprojects_dir, "CMakeLists.txt") + "\n")
+                fd.write(END + "\n")
+
+        with open(quark_exclude_path, "w") as new_exc:
+            try:
+                # Copy the original file, skipping our output from the last run
+                with open(exclude_path, "r") as old_exc:
+                    skip=False
+                    for L in old_exc:
+                        LS = L.strip()
+                        if LS == BEGIN:
+                            skip = True
+                            # If the excludes were already present, re-write
+                            # them in the same position (the user may want to
+                            # force our patterns in a particular position, as
+                            # order matters)
+                            if not written:
+                                write_excludes(new_exc)
+                                written = True
+                        if not skip:
+                            new_exc.write(L)
+                        if LS == END:
+                            skip = False
+            except IOError:
+                pass
+
+            # If they weren't written, write them out at the end
+            if not written:
+                write_excludes(new_exc)
+
+        # Replace the old with the new
         os.replace(quark_exclude_path, exclude_path)
 
 class SvnSubproject(Subproject):
