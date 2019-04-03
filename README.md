@@ -395,7 +395,7 @@ will become something like
 
 ### SSL issues ###
 
-Python has a somewhat turbolent relationship with certificates stores; at the moment of writing there are serious bugs related to Python being unable to find or use the system certificate store, in particular [on macOS](https://stackoverflow.com/a/42107877/214671) and [on every Windows version after Vista](https://stackoverflow.com/q/52074590/214671). For this reason, if your catalog is served through HTTPS you may be unable to access it due to certificate errors.
+Python has a somewhat troubled relationship with certificates stores; at the moment of writing there are serious bugs related to Python being unable to find or use the system certificate store, in particular [on macOS](https://stackoverflow.com/a/42107877/214671) and [on every Windows version after Vista](https://stackoverflow.com/q/52074590/214671). For this reason, if your catalog is served through HTTPS you may be unable to access it due to certificate errors.
 
 As a workaround, if certificate validation fails Quark tries to automatically fallback to using `curl` if it is in the `PATH`; this generally works well enough on macOS. In future we may try to fallback even on the `certifi` package, if it is installed, although it's suboptimal as well, as most often it will be outdated.
 
