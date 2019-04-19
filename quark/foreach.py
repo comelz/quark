@@ -27,13 +27,13 @@ def run():
 
     parser.add_argument(
         "--source_directory", "--src",
-        metavar="SOURCE_DIR", nargs='?',
+        metavar="SOURCE_DIR", nargs="?",
         help="Specify the source directory", default=os.getcwd()
     )
     parser.add_argument(
         "command",
         action="store",
-        nargs='?',
+        nargs="?",
         help="The command that will be run for every dependency"
     )
 
