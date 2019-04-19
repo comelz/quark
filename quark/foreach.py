@@ -83,7 +83,6 @@ def run():
                 subprocess.call(args)
         except Exception:
             raise
-    pass
 
 
 if __name__ == "__main__":
