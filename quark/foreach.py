@@ -44,10 +44,16 @@ def run():
     )
 
     for path, module in modules.items():
-        if type(module) is SvnSubproject:
-            continue
+        version_control = "svn" if type(module) is SvnSubproject else "git"
+        commit_sha = ""
+        revision = ""
 
-        commit_sha = module.ref
+        if version_control == "svn":
+            revision = module.rev
+
+        if version_control == "git":
+            commit_sha = module.ref
+
         module_relpath = os.path.relpath(
             module.directory, optlist.source_directory
         )
@@ -61,14 +67,27 @@ def run():
 
         try:
             args = optlist.command.split()
+
+            args = [
+                os.path.abspath(x) if os.path.exists(x) else x
+                for x in args
+            ]
+
             args.extend([
-                "--name", module_name,
+                "--toplevel", toplevel,
                 "--path", module_relpath,
-                "--sha1", commit_sha,
-                "--toplevel", toplevel
+                "--name", module_name,
+                "--version_control", version_control,
             ])
+
+            if version_control == "git":
+                args.extend(["--sha1", commit_sha])
+
+            if version_control == "svn":
+                args.extend(["--revision", revision])
+
             with change_dir(module.directory):
-                subprocess.check_call(args, shell=True)
+                subprocess.call(args)
         except Exception:
             raise
     pass
