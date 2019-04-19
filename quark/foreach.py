@@ -45,14 +45,13 @@ def run():
 
     for path, module in modules.items():
         version_control = "svn" if type(module) is SvnSubproject else "git"
-        commit_sha = ""
-        revision = ""
-
-        if version_control == "svn":
-            revision = module.rev
 
         if version_control == "git":
+            # Case for git
             commit_sha = module.ref
+        else:
+            # Case for SVN
+            revision = module.rev
 
         module_relpath = os.path.relpath(
             module.directory, optlist.source_directory
@@ -75,8 +74,7 @@ def run():
 
             if version_control == "git":
                 args.extend(["--sha1", commit_sha])
-
-            if version_control == "svn":
+            else:
                 args.extend(["--revision", revision])
 
             with change_dir(module.directory):
