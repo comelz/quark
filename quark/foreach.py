@@ -60,11 +60,6 @@ def run():
         module_name = module.name
         toplevel = os.path.abspath(optlist.source_directory)
 
-        # os.path["name"] = module_name
-        # os.path["path"] = module_relpath
-        # os.path["sha1"] = commit_sha
-        # os.path["toplevel"] = toplevel
-
         try:
             args = optlist.command.split()
 
