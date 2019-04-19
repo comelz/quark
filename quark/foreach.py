@@ -3,8 +3,8 @@
 import os
 import subprocess
 import contextlib
-
 from argparse import ArgumentParser
+
 from .subproject import Subproject
 from .subproject import SvnSubproject
 
