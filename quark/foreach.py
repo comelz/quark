@@ -59,28 +59,25 @@ def run():
         module_name = module.name
         toplevel = os.path.abspath(optlist.source_directory)
 
-        try:
-            args = [
-                os.path.abspath(x) if os.path.exists(x) else x
-                for x in optlist.command.split()
-            ]
+        args = [
+            os.path.abspath(x) if os.path.exists(x) else x
+            for x in optlist.command.split()
+        ]
 
-            args.extend([
-                "--toplevel", toplevel,
-                "--path", module_relpath,
-                "--name", module_name,
-                "--version_control", version_control,
-            ])
+        args.extend([
+            "--toplevel", toplevel,
+            "--path", module_relpath,
+            "--name", module_name,
+            "--version_control", version_control,
+        ])
 
-            if version_control == "git":
-                args.extend(["--sha1", commit_sha])
-            else:
-                args.extend(["--revision", revision])
+        if version_control == "git":
+            args.extend(["--sha1", commit_sha])
+        else:
+            args.extend(["--revision", revision])
 
-            with change_dir(module.directory):
-                subprocess.call(args)
-        except Exception:
-            raise
+        with change_dir(module.directory):
+            subprocess.call(args)
 
 
 if __name__ == "__main__":
