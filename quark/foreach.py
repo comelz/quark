@@ -61,11 +61,9 @@ def run():
         toplevel = os.path.abspath(optlist.source_directory)
 
         try:
-            args = optlist.command.split()
-
             args = [
                 os.path.abspath(x) if os.path.exists(x) else x
-                for x in args
+                for x in optlist.command.split()
             ]
 
             args.extend([
