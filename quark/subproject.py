@@ -271,7 +271,7 @@ class GitSubproject(Subproject):
     def checkout(self):
         shallow = self.conf.get("shallow", False)
 
-        if self.ref == 'commit' and shallow:
+        if self.ref_type == 'commit' and shallow:
             # We cannot straight clone a shallow repo using a commit hash (-b doesn't support it)
             # do the dance described at https://stackoverflow.com/a/43136160/214671
             os.mkdir(self.directory)
