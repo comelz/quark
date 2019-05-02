@@ -51,7 +51,7 @@ def run():
             commit_sha = module.ref
         else:
             # Case for SVN
-            revision = module.rev
+            commit_sha = ""
 
         module_relpath = os.path.relpath(
             module.directory, optlist.source_directory
