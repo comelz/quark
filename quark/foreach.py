@@ -31,6 +31,10 @@ def run():
         help="Specify the source directory", default=os.getcwd()
     )
     parser.add_argument(
+        "-q", "--quiet",
+        help="Only print error messages"
+    )
+    parser.add_argument(
         "command",
         action="store",
         nargs="?",
@@ -77,7 +81,11 @@ def run():
             args.extend(["--revision", revision])
 
         with change_dir(module.directory):
-            subprocess.call(args)
+            if optlist.quiet:
+                subprocess.call(args, stdout=os.devnull)
+            else:
+                subprocess.call(args)
+
 
 
 if __name__ == "__main__":
