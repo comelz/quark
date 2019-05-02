@@ -11,8 +11,8 @@ Working directory must be in the root of a superproject with some subproject dep
 
 To tests the scripts launch the following commands:
 
-`python ../quark/bin/quark foreach '../quark/tests/foreach/foreach.sh'`
-`python ../quark/bin/quark foreach '../quark/tests/foreach/foreach.py'`
+- `python ../quark/bin/quark foreach '../quark/tests/foreach/foreach.sh'`
+- `python ../quark/bin/quark foreach '../quark/tests/foreach/foreach.py'`
 
 The output should be a list of elements for every quark's submodule in the superproject.
 Every print has 5 elements for each submodule and the output should be like this:
