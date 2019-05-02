@@ -78,11 +78,10 @@ def run():
         os.environ["toplevel"] = str(toplevel)
 
         with change_dir(module.directory):
-            if optlist.quiet:
-                subprocess.call(args, stdout=os.devnull)
-            else:
-                subprocess.call(args)
+            output = subprocess.check_output(args)
 
+            if not optlist.quiet:
+                print(output.decode("utf-8"))
 
 
 if __name__ == "__main__":
