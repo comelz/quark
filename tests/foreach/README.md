@@ -1,6 +1,7 @@
 COMMAND LINE TESTING SCRIPTS:
 ```
 foreach
+├─ README.md
 ├─ foreach.py
 └─ foreach.sh
 ```
