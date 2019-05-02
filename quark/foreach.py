@@ -56,6 +56,9 @@ def run():
         module_relpath = os.path.relpath(
             module.directory, optlist.source_directory
         )
+        module_displaypath = os.path.relpath(
+            module.directory, os.getcwd()
+        )
         module_name = module.name
         toplevel = os.path.abspath(optlist.source_directory)
 
@@ -70,6 +73,10 @@ def run():
         # sm_path is the path of the submodule
         # as recorded in the immediate superproject
         os.environ["sm_path"] = str(module_relpath)
+
+        # displaypath contains the relative path from
+        # the current working directory to the submodules root directory
+        os.environ["displaypath"] = str(module_displaypath)
 
         # sha1 is the commit as recorded in the immediate superproject
         os.environ["sha1"] = str(commit_sha)
