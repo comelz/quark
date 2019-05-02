@@ -24,12 +24,6 @@ def run():
     parser = ArgumentParser(
         description="Iter a command through all the dependencies"
     )
-
-    parser.add_argument(
-        "--source_directory", "--src",
-        metavar="SOURCE_DIR", nargs="?",
-        help="Specify the source directory", default=os.getcwd()
-    )
     parser.add_argument(
         "-q", "--quiet",
         help="Only print error messages"
@@ -42,6 +36,7 @@ def run():
     )
 
     optlist = parser.parse_args()
+    optlist.source_directory = os.getcwd()
 
     root, modules = Subproject.create_dependency_tree(
         optlist.source_directory, update=False
