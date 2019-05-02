@@ -63,17 +63,19 @@ def run():
             for x in optlist.command[0].split()
         ]
 
-        args.extend([
-            "--toplevel", toplevel,
-            "--path", module_relpath,
-            "--name", module_name,
-            "--version_control", version_control,
-        ])
+        # name is the name of the submodule
+        os.environ["name"] = str(module_name)
 
-        if version_control == "git":
-            args.extend(["--sha1", commit_sha])
-        else:
-            args.extend(["--revision", revision])
+        # sm_path is the path of the submodule
+        # as recorded in the immediate superproject
+        os.environ["sm_path"] = str(module_relpath)
+
+        # sha1 is the commit as recorded in the immediate superproject
+        os.environ["sha1"] = str(commit_sha)
+
+        # toplevel is the absolute path to the
+        # top-level of the immediate superproject
+        os.environ["toplevel"] = str(toplevel)
 
         with change_dir(module.directory):
             if optlist.quiet:
