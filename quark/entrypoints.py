@@ -12,7 +12,7 @@ commands = [
 aliases = [('co', 'checkout'),
            ('up', 'update'),
            ('fz', 'freeze'),
-           ('st', 'status')
+           ('st', 'status'),
            ('fe', 'foreach')]
 
 def mk_setup_entry_points():
