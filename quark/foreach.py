@@ -26,6 +26,7 @@ def run():
     )
     parser.add_argument(
         "-q", "--quiet",
+        action="store_true",
         help="Only print error messages"
     )
     parser.add_argument(
