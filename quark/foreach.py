@@ -31,7 +31,7 @@ def run():
     parser.add_argument(
         "command",
         action="store",
-        nargs="?",
+        nargs="+",
         help="The command that will be run for every dependency"
     )
 
@@ -60,7 +60,7 @@ def run():
 
         args = [
             os.path.abspath(x) if os.path.exists(x) else x
-            for x in optlist.command.split()
+            for x in optlist.command[0].split()
         ]
 
         args.extend([
