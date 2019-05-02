@@ -1,9 +1,8 @@
 COMMAND LINE TESTING SCRIPTS:
 ```
-..
-  |
-  |- foreach.py
-  |- foreach.sh
+foreach
+├─ foreach.py
+└─ foreach.sh
 ```
 
 HOW TO TEST BOTH SCRIPTS
