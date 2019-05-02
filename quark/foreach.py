@@ -45,14 +45,6 @@ def run():
 
     for path, module in modules.items():
         version_control = "svn" if type(module) is SvnSubproject else "git"
-
-        if version_control == "git":
-            # Case for git
-            commit_sha = module.ref
-        else:
-            # Case for SVN
-            commit_sha = ""
-
         module_relpath = os.path.relpath(
             module.directory, optlist.source_directory
         )
@@ -61,6 +53,20 @@ def run():
         )
         module_name = module.name
         toplevel = os.path.abspath(optlist.source_directory)
+
+        if version_control == "git":
+            # Case for git
+            commit_sha = module.ref
+        else:
+            # Case for SVN
+            if not optlist.quiet:
+                print(
+                    "WARNING: {} at {} has been skipped because it's a "
+                    "SVN repository\n".format(
+                        module_name,
+                        module_displaypath
+                    ))
+            continue
 
         cmd = " ".join([
             os.path.abspath(x) if os.path.exists(x) else x
