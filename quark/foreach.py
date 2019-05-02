@@ -62,10 +62,10 @@ def run():
         module_name = module.name
         toplevel = os.path.abspath(optlist.source_directory)
 
-        args = [
+        cmd = " ".join([
             os.path.abspath(x) if os.path.exists(x) else x
             for x in optlist.command[0].split()
-        ]
+        ])
 
         # name is the name of the submodule
         os.environ["name"] = str(module_name)
@@ -86,7 +86,7 @@ def run():
         os.environ["toplevel"] = str(toplevel)
 
         with change_dir(module.directory):
-            output = subprocess.check_output(args)
+            output = subprocess.check_output(cmd, shell=True)
 
             if not optlist.quiet:
                 print(output.decode("utf-8"))
