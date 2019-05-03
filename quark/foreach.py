@@ -2,7 +2,6 @@
 
 import os
 import subprocess
-import contextlib
 from argparse import ArgumentParser
 
 from quark.utils import DirectoryContext
