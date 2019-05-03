@@ -22,7 +22,17 @@ def change_dir(path):
 
 def run():
     parser = ArgumentParser(
-        description="Iter a command through all the dependencies"
+        description="""
+        Evaluates an arbitrary shell command in each submodule, skipping all
+        the svn's submodules.
+        The command has access to the variables $name, $sm_path, $displaypath,
+        $sha1 and $toplevel:
+        $name is the name of the submodule;
+        $sm_path is the path of the submodule relative to the superproject;
+        $displaypath is the path of the submodule relative to the root directory;
+        $sha1 is the commit as recorded in the immediate superproject;
+        $toplevel is the absolute path to the top-level of the immediate superproject.
+        """
     )
     parser.add_argument(
         "-q", "--quiet",
