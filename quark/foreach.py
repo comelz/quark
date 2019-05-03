@@ -5,17 +5,9 @@ import subprocess
 import contextlib
 from argparse import ArgumentParser
 
+from quark.utils import DirectoryContext
 
-
-@contextlib.contextmanager
-def change_dir(path):
-    _old_path = os.getcwd()
-
-    try:
-        os.chdir(path)
-        yield
-    finally:
-        os.chdir(_old_path)
+from .subproject import Subproject
 
 
 def run():
@@ -98,7 +90,7 @@ def run():
         # top-level of the immediate superproject
         os.environ["toplevel"] = str(toplevel)
 
-        with change_dir(module.directory):
+        with DirectoryContext(module.directory):
             output = subprocess.check_output(cmd, shell=True)
 
             if not optlist.quiet:
