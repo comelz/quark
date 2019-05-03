@@ -5,8 +5,6 @@ import subprocess
 import contextlib
 from argparse import ArgumentParser
 
-from .subproject import Subproject
-from .subproject import SvnSubproject
 
 
 @contextlib.contextmanager
@@ -54,7 +52,6 @@ def run():
     )
 
     for path, module in modules.items():
-        version_control = "svn" if type(module) is SvnSubproject else "git"
         module_relpath = os.path.relpath(
             module.directory, optlist.source_directory
         )
@@ -64,7 +61,7 @@ def run():
         module_name = module.name
         toplevel = os.path.abspath(optlist.source_directory)
 
-        if version_control == "git":
+        if module.get_version_control() == "git":
             # Case for git
             commit_sha = module.ref
         else:

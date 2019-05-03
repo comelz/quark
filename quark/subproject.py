@@ -46,6 +46,10 @@ Please remove it and re-run quark up.
 
 class Subproject:
     @staticmethod
+    def get_version_control():
+        raise NotImplementedError()
+
+    @staticmethod
     def _parse_fragment(url):
         res = {}
         for equality in url.fragment.split():
@@ -239,6 +243,10 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         pass
 
 class GitSubproject(Subproject):
+    @staticmethod
+    def get_version_control():
+        return "git"
+
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf, **kwargs)
         self.ref_is_commit = False
@@ -451,6 +459,10 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
         os.replace(quark_exclude_path, exclude_path)
 
 class SvnSubproject(Subproject):
+    @staticmethod
+    def get_version_control():
+        return "svn"
+
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf = {}, **kwargs)
         self.rev = 'HEAD'
