@@ -36,21 +36,16 @@ def run():
     )
 
     optlist = parser.parse_args()
-    optlist.source_directory = os.getcwd()
 
     root, modules = Subproject.create_dependency_tree(
-        optlist.source_directory, update=False
+        os.getcwd(), update=False
     )
 
     for path, module in modules.items():
-        module_relpath = os.path.relpath(
-            module.directory, optlist.source_directory
-        )
-        module_displaypath = os.path.relpath(
-            module.directory, os.getcwd()
-        )
+        module_relpath = os.path.relpath(module.directory, os.getcwd())
+        module_displaypath = os.path.relpath(module.directory, os.getcwd())
         module_name = module.name
-        toplevel = os.path.abspath(optlist.source_directory)
+        toplevel = os.path.abspath(os.getcwd())
 
         if module.get_version_control() == "git":
             # Case for git
