@@ -95,6 +95,11 @@ def run():
             if not optlist.quiet:
                 print(output.decode("utf-8"))
 
+        try:
+            del os.environ["sha1"]
+        except KeyError:
+            del os.environ["rev"]
+
 
 if __name__ == "__main__":
     run()
