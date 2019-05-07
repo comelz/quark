@@ -399,11 +399,13 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
         try:
             os.makedirs(exclude_path_dir, exist_ok = True)
         except NotADirectoryError:
-            # If we are in a working tree created with 'git worktree add'
-            # .git is a file, not a dir, and the command fails. We
-            # warn the user and do nothing.
-            # FIXME: this implies that the exclude file used for the additional
-            # working trees is the same created for the main working tree.
+            # If we are in a working tree created with 'git worktree add' then
+            # .git is a file, not a dir, and the makedirs function fails.
+            # Unfortunately git doesn't support different info/exclude files
+            # for different working trees connected to the same local repo, so
+            # we just warn the user and do nothing: note that this implies that
+            # the exclude file used for the additional working trees is the
+            # same created for the main working tree (if any).
             logger.warning("Couldn't set local ignore list. If '%s' is a "
                     "worktree this is expected and the info/exclude file of "
                     "the main working tree will be used." % self.directory)
