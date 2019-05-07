@@ -49,6 +49,27 @@ class Subproject:
     def get_version_control():
         raise NotImplementedError()
 
+    def get_env_variables(self):
+        toplevel = self.directory if not self.parents \
+            else list(self.parents)[-1].directory
+
+        sm_path = "." if not self.parents \
+            else os.path.relpath(
+                self.directory, list(self.parents)[-1].directory
+            )
+        displaypath = os.path.relpath(self.directory, os.getcwd())
+
+        return {
+            # the name of the submodule
+            "name": self.name,
+            # the path of the submodule from the immediate superproject
+            "sm_path": sm_path,
+            # the relative path of the module from the actual working directory
+            "displaypath": displaypath,
+            # the directory of the immediate superproject
+            "toplevel": toplevel
+        }
+
     @staticmethod
     def _parse_fragment(url):
         res = {}
@@ -246,6 +267,15 @@ class GitSubproject(Subproject):
     @staticmethod
     def get_version_control():
         return "git"
+
+    def get_env_variables(self):
+        return {
+            **super().get_env_variables(),
+            **{
+                "sha1": str(self.ref),
+                "version_control": self.get_version_control()
+            }
+        }
 
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf, **kwargs)
@@ -463,6 +493,15 @@ class SvnSubproject(Subproject):
     def get_version_control():
         return "svn"
 
+    def get_env_variables(self):
+        return {
+            **super().get_env_variables(),
+            **{
+                "rev": str(self.rev),
+                "version_control": self.get_version_control()
+            }
+        }
+
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf = {}, **kwargs)
         self.rev = 'HEAD'
@@ -632,4 +671,3 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
         # actually write the file
         with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as f:
             f.write(cmakelists_data)
-

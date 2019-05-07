@@ -49,47 +49,13 @@ def run():
     )
 
     for path, module in modules.items():
-        module_relpath = os.path.relpath(module.directory, os.getcwd())
-        module_displaypath = os.path.relpath(module.directory, os.getcwd())
-        module_name = module.name
-        toplevel = os.path.abspath(os.getcwd())
-        version_control = module.get_version_control()
-
         cmd = " ".join([
             os.path.abspath(x) if os.path.exists(x) else x
             for x in optlist.command[0].split()
         ])
 
         cmd_env = dict(os.environ)
-
-        # name is the name of the submodule
-        cmd_env["name"] = str(module_name)
-
-        # sm_path is the path of the submodule
-        # as recorded in the immediate superproject
-        cmd_env["sm_path"] = str(module_relpath)
-
-        # displaypath contains the relative path from
-        # the current working directory to the submodules root directory
-        cmd_env["displaypath"] = str(module_displaypath)
-
-        # toplevel is the absolute path to the
-        # top-level of the immediate superproject
-        cmd_env["toplevel"] = str(toplevel)
-
-        # version_control is the version control used for the subproject
-        cmd_env["version_control"] = version_control
-
-        if version_control == "git":
-            # Case for git
-            # sha1 is the commit of the subproject ( empty string
-            # if it is a svn repository )
-            cmd_env["sha1"] = str(module.ref)
-        else:
-            # Case for SVN
-            # rev is the revision of the subproject ( empty string if
-            # it is a git repository )
-            cmd_env["rev"] = module.rev
+        cmd_env.update(module.get_env_variables())
 
         with DirectoryContext(module.directory):
             output = subprocess.check_output(cmd, shell=True, env=cmd_env)
