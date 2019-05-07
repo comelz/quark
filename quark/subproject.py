@@ -241,15 +241,17 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
 class GitSubproject(Subproject):
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf, **kwargs)
-        self.ref_is_commit = False
+        # Let's assume that origin/HEAD points to a branch, anything else would be madness
+        self.ref_type = 'branch'
         self.ref = 'origin/HEAD'
         if url.fragment:
             fragment = Subproject._parse_fragment(url)
             if 'commit' in fragment:
                 self.ref = fragment['commit']
-                self.ref_is_commit = True
+                self.ref_type = 'commit'
             elif 'tag' in fragment:
                 self.ref = fragment['tag']
+                self.ref_type = 'tag'
             elif 'branch' in fragment:
                 self.ref = 'origin/%s' % fragment['branch']
         self.url = url._replace(fragment='')._replace(scheme=url.scheme.replace('git+', ''))
@@ -269,7 +271,7 @@ class GitSubproject(Subproject):
     def checkout(self):
         shallow = self.conf.get("shallow", False)
 
-        if self.ref_is_commit and shallow:
+        if self.ref_type == 'commit' and shallow:
             # We cannot straight clone a shallow repo using a commit hash (-b doesn't support it)
             # do the dance described at https://stackoverflow.com/a/43136160/214671
             os.mkdir(self.directory)
@@ -285,11 +287,17 @@ class GitSubproject(Subproject):
                 extra_opts += ["--depth", "1"]
             # Needed essentially for the shallow case, as for full clones the
             # git clone -n + git checkout would suffice
-            if not self.ref_is_commit and self.ref != 'origin/HEAD':
+            if shallow and self.ref_type != 'commit' and self.ref != 'origin/HEAD':
                 extra_opts += ['-b', self.noremote_ref()]
             fork(['git', 'clone', '-n'] + extra_opts + ['--', self.url.geturl(), self.directory])
             with cd(self.directory):
-                fork(['git', 'checkout', self.ref, '--'])
+                opts = [self.ref]
+                # If it's a branch, create a remote-tracking one
+                if self.ref_type == 'branch' and not shallow:
+                    # Find out a sensible local branch name (needed for origin/HEAD)
+                    local_branch = self.symbolic_full_name(self.ref).split('/origin/', 1)[1]
+                    opts = [ local_branch ]
+                fork(['git', 'checkout'] + opts + ['--'])
 
     def update(self, clean=False):
         def actualUpdate():
@@ -319,6 +327,33 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
                     fork(['git', 'checkout', 'FETCH_HEAD', '--'])
                 else:
                     fork(['git', 'fetch'])
+                    # If we want to go on a branch, try to find a local branch that tracks it
+                    # and use it (possibly with a fast-forward)
+                    if self.ref_type == 'branch':
+                        # Resolve the remote ref
+                        remote_fullref = self.symbolic_full_name(self.ref)
+                        # Get a sensible local branch name to try
+                        local_ref = remote_fullref.split('/origin/', 1)[1]
+                        # Check if it is actually tracking our target
+                        try:
+                            local_fulltrackref = self.symbolic_full_name(local_ref + "@{u}")
+                        except CalledProcessError:
+                            # It's fine if it fails - we may not have a local-tracking branch,
+                            # so git checkout will do the right thing here
+                            local_fulltrackref = remote_fullref
+
+                        if remote_fullref == local_fulltrackref:
+                            try:
+                                # Checkout and fast-forward
+                                fork(['git', 'checkout', local_ref, '--'])
+                                fork(['git', 'merge', '--ff-only', self.ref, '--'])
+                                # Final sanity check
+                                if log_check_output(['git', 'rev-parse', self.ref]) != log_check_output(['git', 'rev-parse', local_ref]):
+                                    logger.warning("Warning: your local branch is ahead of required remote branch!")
+                                return
+                            except CalledProcessError:
+                                logger.warning("Couldn't fast-forward local branch, fallback to detached head mode...")
+                    # General case: plain checkout of the origin ref (going in detached HEAD)
                     fork(['git', 'checkout', self.ref, '--'])
 
         if not exists(self.directory):
@@ -355,6 +390,10 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
     def has_local_edit(self):
         with cd(self.directory):
             return log_check_output(['git', 'status', '--porcelain']) != b""
+
+    def symbolic_full_name(self, ref):
+        with cd(self.directory):
+            return log_check_output(['git', 'rev-parse', '--symbolic-full-name', ref]).strip().decode('utf-8')
 
     @staticmethod
     def url_from_directory(directory, include_commit = True):
