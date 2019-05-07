@@ -60,45 +60,42 @@ def run():
             for x in optlist.command[0].split()
         ])
 
+        cmd_env = dict(os.environ)
+
         # name is the name of the submodule
-        os.environ["name"] = str(module_name)
+        cmd_env["name"] = str(module_name)
 
         # sm_path is the path of the submodule
         # as recorded in the immediate superproject
-        os.environ["sm_path"] = str(module_relpath)
+        cmd_env["sm_path"] = str(module_relpath)
 
         # displaypath contains the relative path from
         # the current working directory to the submodules root directory
-        os.environ["displaypath"] = str(module_displaypath)
+        cmd_env["displaypath"] = str(module_displaypath)
 
         # toplevel is the absolute path to the
         # top-level of the immediate superproject
-        os.environ["toplevel"] = str(toplevel)
+        cmd_env["toplevel"] = str(toplevel)
 
         # version_control is the version control used for the subproject
-        os.environ["version_control"] = version_control
+        cmd_env["version_control"] = version_control
 
         if version_control == "git":
             # Case for git
             # sha1 is the commit of the subproject ( empty string
             # if it is a svn repository )
-            os.environ["sha1"] = str(module.ref)
+            cmd_env["sha1"] = str(module.ref)
         else:
             # Case for SVN
             # rev is the revision of the subproject ( empty string if
             # it is a git repository )
-            os.environ["rev"] = module.rev
+            cmd_env["rev"] = module.rev
 
         with DirectoryContext(module.directory):
-            output = subprocess.check_output(cmd, shell=True)
+            output = subprocess.check_output(cmd, shell=True, env=cmd_env)
 
             if not optlist.quiet:
                 print(output.decode("utf-8"))
-
-        try:
-            del os.environ["sha1"]
-        except KeyError:
-            del os.environ["rev"]
 
 
 if __name__ == "__main__":
