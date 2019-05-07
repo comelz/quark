@@ -14,13 +14,18 @@ TEST FOREACH
   $ cd src/test_dir_3
   $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_3
   $ cd ../..
+  $ cd src/test_dir_4
+  $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_4
+  $ cd ../..
   $ quark freeze > /dev/null
   $ quark foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
   .* (re)
   .* (re)
-  test_dir_2 src/test_dir_2 src/test_dir_2 b65618e80ec59a34b1178b148410d358263e9123 /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
+  test_dir_2 src/test_dir_2 src/test_dir_2 bbad4b8fc3c58b39e14956bc81d73b756a08160e /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
    (re)
   test_dir_3 src/test_dir_3 src/test_dir_3 f7e94048b2b2d5a3987ec00ed048fc3fac7a74f0 /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
+   (re)
+  test_dir_4 src/test_dir_4 src/test_dir_4 13a506afbbae847c8878c04f6f305dff597e3d7d /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
    (re)
 
 
