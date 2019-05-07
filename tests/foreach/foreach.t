@@ -18,9 +18,9 @@ TEST FOREACH
   $ quark foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
   .* (re)
   .* (re)
-  test_dir_2 src/test_dir_2 src/test_dir_2 b65618e80ec59a34b1178b148410d358263e9123 .* git (re)
+  test_dir_2 src/test_dir_2 src/test_dir_2 b65618e80ec59a34b1178b148410d358263e9123 /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
    (re)
-  test_dir_3 src/test_dir_3 src/test_dir_3 f7e94048b2b2d5a3987ec00ed048fc3fac7a74f0 .* git (re)
+  test_dir_3 src/test_dir_3 src/test_dir_3 f7e94048b2b2d5a3987ec00ed048fc3fac7a74f0 /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
    (re)
 
 
