@@ -49,15 +49,9 @@ class Subproject:
     def get_version_control():
         raise NotImplementedError()
 
-    def get_env_variables(self):
-        toplevel = self.directory if not self.parents \
-            else list(self.parents)[-1].directory
-
-        sm_path = "." if not self.parents \
-            else os.path.relpath(
-                self.directory, list(self.parents)[-1].directory
-            )
-        displaypath = os.path.relpath(self.directory, os.getcwd())
+    def get_env_variables(self, toplevel):
+        sm_path = os.path.relpath(self.directory, toplevel)
+        displaypath = os.path.relpath(self.directory, toplevel)
 
         return {
             # the name of the submodule
@@ -268,9 +262,9 @@ class GitSubproject(Subproject):
     def get_version_control():
         return "git"
 
-    def get_env_variables(self):
+    def get_env_variables(self, toplevel):
         return {
-            **super().get_env_variables(),
+            **super().get_env_variables(toplevel=toplevel),
             **{
                 "sha1": str(self.ref),
                 "version_control": self.get_version_control()
@@ -493,9 +487,9 @@ class SvnSubproject(Subproject):
     def get_version_control():
         return "svn"
 
-    def get_env_variables(self):
+    def get_env_variables(self, toplevel):
         return {
-            **super().get_env_variables(),
+            **super().get_env_variables(toplevel=toplevel),
             **{
                 "rev": str(self.rev),
                 "version_control": self.get_version_control()

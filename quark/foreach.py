@@ -55,7 +55,7 @@ def run():
         ])
 
         cmd_env = dict(os.environ)
-        cmd_env.update(module.get_env_variables())
+        cmd_env.update(module.get_env_variables(toplevel=os.getcwd()))
 
         with DirectoryContext(module.directory):
             output = subprocess.check_output(cmd, shell=True, env=cmd_env)
