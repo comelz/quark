@@ -45,10 +45,6 @@ Please remove it and re-run quark up.
 """ % (directory, proj_type))
 
 class Subproject:
-    @staticmethod
-    def get_version_control():
-        raise NotImplementedError()
-
     def get_env_variables(self, toplevel):
         sm_path = os.path.relpath(self.directory, toplevel)
         displaypath = os.path.relpath(self.directory, toplevel)
@@ -258,16 +254,12 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         pass
 
 class GitSubproject(Subproject):
-    @staticmethod
-    def get_version_control():
-        return "git"
-
     def get_env_variables(self, toplevel):
         return {
             **super().get_env_variables(toplevel=toplevel),
             **{
                 "sha1": str(self.ref),
-                "version_control": self.get_version_control()
+                "version_control": "git"
             }
         }
 
@@ -483,16 +475,12 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
         os.replace(quark_exclude_path, exclude_path)
 
 class SvnSubproject(Subproject):
-    @staticmethod
-    def get_version_control():
-        return "svn"
-
     def get_env_variables(self, toplevel):
         return {
             **super().get_env_variables(toplevel=toplevel),
             **{
                 "rev": str(self.rev),
-                "version_control": self.get_version_control()
+                "version_control": "svn"
             }
         }
 
