@@ -48,16 +48,15 @@ def run():
     )
 
     for path, module in modules.items():
-        cmd = " ".join([
-            os.path.abspath(x) if os.path.exists(x) else x
-            for x in optlist.command[0].split()
-        ])
-
         cmd_env = dict(os.environ)
         cmd_env.update(module.get_env_variables(toplevel=os.getcwd()))
 
         with DirectoryContext(module.directory):
-            output = subprocess.check_output(cmd, shell=True, env=cmd_env)
+            output = subprocess.check_output(
+                optlist.command[0],
+                shell=True,
+                env=cmd_env
+            )
 
             if not optlist.quiet:
                 print(output.decode("utf-8"))
