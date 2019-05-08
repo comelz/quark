@@ -52,14 +52,11 @@ def run():
         cmd_env.update(module.get_env_variables(toplevel=os.getcwd()))
 
         with DirectoryContext(module.directory):
-            output = subprocess.check_output(
+            subprocess.check_call(
                 optlist.command[0],
                 shell=True,
                 env=cmd_env
             )
-
-            if not optlist.quiet:
-                print(output.decode("utf-8"))
 
 
 if __name__ == "__main__":
