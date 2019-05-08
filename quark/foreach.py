@@ -52,6 +52,9 @@ def run():
         cmd_env.update(module.get_env_variables(toplevel=os.getcwd()))
 
         with DirectoryContext(module.directory):
+            if not optlist.quiet:
+                print("Entering {}".format(cmd_env["name"]))
+
             subprocess.check_call(
                 optlist.command[0],
                 shell=True,
