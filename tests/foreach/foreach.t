@@ -33,16 +33,15 @@ HELPER
   $ python $TESTDIR/../../bin/quark foreach --help
   usage: quark foreach [-h] [-q] command [command ...]
    (re)
-  Evaluates an arbitrary shell command in each submodule, skipping all the svn's
-  submodules. The command has access to the variables $name, $sm_path,
-  $displaypath, $sha1, $toplevel, $rev, $version_control: $name is the name of
-  the submodule; $sm_path is the path of the submodule relative to the
-  superproject; $displaypath is the path of the submodule relative to the root
-  directory; $version_control is the version control used by the subproject
-  (git/svn); $sha1 is the commit of the subproject ( empty string if it is a svn
-  repository ); $rev is the revision of the subproject ( empty string if it is a
-  git repository ); $toplevel is the absolute path to the top-level of the
-  immediate superproject.
+  Evaluates an arbitrary shell command in each submodule. The command has access
+  to the variables $name, $sm_path, $displaypath, $sha1, $toplevel, $rev,
+  $version_control: $name is the name of the submodule; $sm_path is the path of
+  the submodule relative to the superproject; $displaypath is the path of the
+  submodule relative to the root directory; $version_control is the version
+  control used by the subproject (git/svn); $sha1 is the commit of the
+  subproject ( empty string if it is a svn repository ); $rev is the revision of
+  the subproject ( empty string if it is a git repository ); $toplevel is the
+  absolute path to the top-level of the immediate superproject.
    (re)
   positional arguments:
     command      The command that will be run for every dependency

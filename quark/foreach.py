@@ -12,8 +12,7 @@ from .subproject import Subproject
 def run():
     parser = ArgumentParser(
         description="""
-        Evaluates an arbitrary shell command in each submodule, skipping all
-        the svn's submodules.
+        Evaluates an arbitrary shell command in each submodule.
         The command has access to the variables $name, $sm_path, $displaypath,
         $sha1, $toplevel, $rev, $version_control:
         $name is the name of the submodule;
