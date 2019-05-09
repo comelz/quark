@@ -37,7 +37,7 @@ def run():
     parser.add_argument(
         "command",
         action="store",
-        nargs="+",
+        nargs=1,
         help="The command that will be run for every dependency"
     )
 
