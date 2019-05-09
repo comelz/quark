@@ -3,21 +3,55 @@ SETUP PYTHON
 $ [ -n "$PYTHON" ] || PYTHON="`which python`"
 $ [ -n "$PYTHONPATH" ] || PYTHONPATH="$TESTDIR/.." && export PYTHONPATH
 
-TEST FOREACH WITH COMMAND
-
-  $ cp -r $TESTDIR/test_dir_1 test_dir_1
+SETUP TEST DIR
+  $ cp -r $TESTDIR/cram_dir/test_dir_1 test_dir_1
   $ cd test_dir_1
-  $ git remote add origin file://$TESTDIR/test_dir_1
-  $ cd src/test_dir_2
-  $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_2
-  $ cd ../..
-  $ cd src/test_dir_3
-  $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_3
-  $ cd ../..
-  $ cd src/test_dir_4
-  $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_4
+  $ git init
+  .* (re)
+  $ git remote add origin file://$TESTDIR/cram_dir/test_dir_1
+  $ git add *
+  $ git commit -m "First Commit"
+  .* (re)
+  .* (re)
+  .* (re)
+  $ mkdir src
+  $ cd src
+  $ cp -r $TESTDIR/cram_dir/test_dir_2 test_dir_2
+  $ cd test_dir_2
+  $ git init
+  .* (re)
+  $ git remote add origin file://$TESTDIR/cram_dir/test_dir_2
+  $ git add *
+  $ git commit -m "First Commit"
+  .* (re)
+  .* (re)
+  .* (re)
+  $ cd ..
+  $ cp -r $TESTDIR/cram_dir/test_dir_3 test_dir_3
+  $ cd test_dir_3
+  $ git init
+  .* (re)
+  $ git add *
+  $ git commit -m "First Commit"
+  .* (re)
+  .* (re)
+  .* (re)
+  $ git remote add origin file://$TESTDIR/cram_dir/test_dir_3
+  $ cd ..
+  $ cp -r $TESTDIR/cram_dir/test_dir_4 test_dir_4
+  $ cd test_dir_4
+  $ git init
+  .* (re)
+  $ git add *
+  $ git commit -m "First Commit"
+  .* (re)
+  .* (re)
+  .* (re)
+  $ git remote add origin file://$TESTDIR/cram_dir/test_dir_4
   $ cd ../..
   $ quark freeze > /dev/null
+
+TEST FOREACH WITH COMMAND
   $ quark foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
   .* (re)
   .* (re)
@@ -30,20 +64,6 @@ TEST FOREACH WITH COMMAND
 
 
 TEST FOREACH WITH SCRIPT
-
-  $ cp -r $TESTDIR/test_dir_1 test_dir_1
-  $ cd test_dir_1
-  $ git remote add origin file://$TESTDIR/test_dir_1
-  $ cd src/test_dir_2
-  $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_2
-  $ cd ../..
-  $ cd src/test_dir_3
-  $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_3
-  $ cd ../..
-  $ cd src/test_dir_4
-  $ git remote add origin file://$TESTDIR/test_dir_1/src/test_dir_4
-  $ cd ../..
-  $ quark freeze > /dev/null
   $ quark foreach $TESTDIR/foreach.sh
   .* (re)
   .* (re)
