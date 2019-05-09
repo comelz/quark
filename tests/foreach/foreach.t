@@ -55,39 +55,39 @@ TEST FOREACH WITH COMMAND
   $ quark foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
   .* (re)
   .* (re)
-  test_dir_2 src/test_dir_2 src/test_dir_2 bbad4b8fc3c58b39e14956bc81d73b756a08160e /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
-   (re)
-  test_dir_3 src/test_dir_3 src/test_dir_3 f7e94048b2b2d5a3987ec00ed048fc3fac7a74f0 /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
-   (re)
-  test_dir_4 src/test_dir_4 src/test_dir_4 13a506afbbae847c8878c04f6f305dff597e3d7d /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
-   (re)
+  Entering test_dir_2
+  test_dir_2 src/test_dir_2 src/test_dir_2 .+ /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
+  Entering test_dir_3
+  test_dir_3 src/test_dir_3 src/test_dir_3 .+ /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
+  Entering test_dir_4
+  test_dir_4 src/test_dir_4 src/test_dir_4 .+ /tmp/cramtests-.*/foreach.t/test_dir_1 git (re)
 
 
 TEST FOREACH WITH SCRIPT
   $ quark foreach $TESTDIR/foreach.sh
   .* (re)
   .* (re)
+  Entering test_dir_2
   name: test_dir_2
   sm_path: src/test_dir_2
   displaypath: src/test_dir_2
   version_control: git
-  sha1: bbad4b8fc3c58b39e14956bc81d73b756a08160e
-  rev: \w* (re)
-  toplevel: /tmp/cramtests-.*/foreach.t/test_dir_1/test_dir_1 (re)
-   (re)
+  sha1: .+ (re)
+  rev:\s* (re)
+  toplevel: /tmp/cramtests-.*/foreach.t/test_dir_1 (re)
+  Entering test_dir_3
   name: test_dir_3
   sm_path: src/test_dir_3
   displaypath: src/test_dir_3
   version_control: git
-  sha1: f7e94048b2b2d5a3987ec00ed048fc3fac7a74f0
-  rev: \w* (re)
-  toplevel: /tmp/cramtests-.*/foreach.t/test_dir_1/test_dir_1 (re)
-   (re)
+  sha1: .+ (re)
+  rev:\s* (re)
+  toplevel: /tmp/cramtests-.*/foreach.t/test_dir_1 (re)
+  Entering test_dir_4
   name: test_dir_4
   sm_path: src/test_dir_4
   displaypath: src/test_dir_4
   version_control: git
-  sha1: 13a506afbbae847c8878c04f6f305dff597e3d7d
-  rev: \w* (re)
-  toplevel: /tmp/cramtests-.*/foreach.t/test_dir_1/test_dir_1 (re)
-   (re)
+  sha1: .+ (re)
+  rev:\s* (re)
+  toplevel: /tmp/cramtests-.*/foreach.t/test_dir_1 (re)
