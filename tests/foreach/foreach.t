@@ -1,8 +1,3 @@
-SETUP PYTHON
-
-$ [ -n "$PYTHON" ] || PYTHON="`which python`"
-$ [ -n "$PYTHONPATH" ] || PYTHONPATH="$TESTDIR/.." && export PYTHONPATH
-
 SETUP TEST DIR
   $ cp -r $TESTDIR/cram_dir/test_dir_1 test_dir_1
   $ cd test_dir_1
