@@ -1,6 +1,6 @@
 {
   "subprojects_dir": "src",
   "depends": {
-      "test_dir_4": {"url": "git+file:///../test_dir_4"}
+      "test_dir_4": {"url": "git+file://PH_TESTDIR4"}
   }
 }
