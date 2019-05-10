@@ -48,7 +48,7 @@ def run():
         os.getcwd(), update=False
     )
 
-    for path, module in modules.items():
+    for path, module in sorted(modules.items()):
         cmd_env = dict(os.environ)
         cmd_env.update(module.get_env_variables(toplevel=os.getcwd()))
 
