@@ -1,6 +1,7 @@
 # -*- coding: utf-8 *--
 
 import os
+import sys
 import subprocess
 from argparse import ArgumentParser
 
@@ -53,7 +54,8 @@ def run():
 
         with DirectoryContext(module.directory):
             if not optlist.quiet:
-                print("Entering {}".format(cmd_env["name"]))
+                sys.stdout.write("Entering {}\n".format(cmd_env["name"]))
+                sys.stdout.flush()
 
             subprocess.check_call(
                 optlist.command[0],
