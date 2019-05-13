@@ -75,7 +75,7 @@
   $ cd $ROOT_TEST
   $ quark freeze > /dev/null
 
-# Repeat the first test with the freezed version
+# Repeat the first test with the frozen version
 # This time I wanna be sure that the given commits are SHA-1 hashes
 # The check for the hashes is done by the regex '\w{40}'
 # (Match exactly 40 times any word character)
