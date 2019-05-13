@@ -77,14 +77,14 @@
 
 # Repeat the first test with the frozen version
 # This time I wanna be sure that the given commits are SHA-1 hashes
-# The check for the hashes is done by the regex '\w{40}'
+# The check for the hashes is done by the regex '[a-fA-F0-9]{40}'
 # (Match exactly 40 times any word character)
   $ quark foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
   .* (re)
   .* (re)
   Entering test_dir_2
-  test_dir_2 src/test_dir_2 src/test_dir_2 \w{40} /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
+  test_dir_2 src/test_dir_2 src/test_dir_2 [a-fA-F0-9]{40} /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
   Entering test_dir_3
-  test_dir_3 src/test_dir_3 src/test_dir_3 \w{40} /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
+  test_dir_3 src/test_dir_3 src/test_dir_3 [a-fA-F0-9]{40} /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
   Entering test_dir_4
-  test_dir_4 src/test_dir_4 src/test_dir_4 \w{40} /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
+  test_dir_4 src/test_dir_4 src/test_dir_4 [a-fA-F0-9]{40} /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
