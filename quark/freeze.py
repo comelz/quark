@@ -16,7 +16,7 @@ def run():
     for name, mod in modules.items():
         freeze_conf[name] = mod.url_from_checkout()
     with open(join(root.directory, freeze_file), 'w') as f:
-        json.dump(freeze_conf, f, indent=4)
+        json.dump(freeze_conf, f, indent=4, sort_keys = True)
 
 if __name__ == "__main__":
     run()
