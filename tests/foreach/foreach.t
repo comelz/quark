@@ -23,8 +23,7 @@
 # Clone the root testing git repo
   $ cd $CRAMPTESTDIR
   $ mkdir checkout && cd checkout
-  $ git clone file://$REPOS/test_dir_1 > /dev/null
-  Cloning into 'test_dir_1'...
+  $ git clone file://$REPOS/test_dir_1 > /dev/null 2>&1
 
 # Quark UP from the root and setup a new variable ROOT_TEST
   $ cd test_dir_1
