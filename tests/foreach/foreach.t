@@ -1,6 +1,7 @@
 # Setup few testing env variables
   $ CRAMPTESTDIR=$PWD
   $ REPOS=$CRAMPTESTDIR/repos
+  $ _QUARK=$TESTDIR/../../bin/quark
 
 # Copy all the test directories
   $ mkdir repos && cd repos && cp -r $TESTDIR/cram_dir/test_dir_* ./
@@ -28,10 +29,10 @@
 # Quark UP from the root and setup a new variable ROOT_TEST
   $ cd test_dir_1
   $ ROOT_TEST=$CRAMPTESTDIR/checkout/test_dir_1
-  $ quark up >/dev/null 2>&1
+  $ $_QUARK up > /dev/null 2>&1
 
 # Test foreach's output with a simple echo of its env variables
-  $ quark foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
+  $ $_QUARK foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
   .* (re)
   .* (re)
   Entering test_dir_2
@@ -42,7 +43,7 @@
   test_dir_4 src/test_dir_4 src/test_dir_4 .+ /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
 
 # Test foreach with a shell script
-  $ quark foreach $TESTDIR/foreach.sh
+  $ $_QUARK foreach $TESTDIR/foreach.sh
   .* (re)
   .* (re)
   Entering test_dir_2
@@ -72,13 +73,13 @@
 
 # Freeze the dependencies
   $ cd $ROOT_TEST
-  $ quark freeze > /dev/null
+  $ $_QUARK freeze > /dev/null
 
 # Repeat the first test with the frozen version
 # This time I wanna be sure that the given commits are SHA-1 hashes
 # The check for the hashes is done by the regex '[a-fA-F0-9]{40}'
 # (Match exactly 40 times any word character)
-  $ quark foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
+  $ $_QUARK foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
   .* (re)
   .* (re)
   Entering test_dir_2
