@@ -45,6 +45,21 @@ Please remove it and re-run quark up.
 """ % (directory, proj_type))
 
 class Subproject:
+    def get_env_variables(self, toplevel):
+        sm_path = os.path.relpath(self.directory, toplevel)
+        displaypath = os.path.relpath(self.directory, toplevel)
+
+        return {
+            # the name of the submodule
+            "name": self.name,
+            # the path of the submodule from the immediate superproject
+            "sm_path": sm_path,
+            # the relative path of the module from the actual working directory
+            "displaypath": displaypath,
+            # the directory of the immediate superproject
+            "toplevel": toplevel
+        }
+
     @staticmethod
     def _parse_fragment(url):
         res = {}
@@ -239,6 +254,15 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         pass
 
 class GitSubproject(Subproject):
+    def get_env_variables(self, toplevel):
+        return {
+            **super().get_env_variables(toplevel=toplevel),
+            **{
+                "sha1": str(self.ref),
+                "version_control": "git"
+            }
+        }
+
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf, **kwargs)
         # Let's assume that origin/HEAD points to a branch, anything else would be madness
@@ -503,6 +527,15 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
         os.replace(quark_exclude_path, exclude_path)
 
 class SvnSubproject(Subproject):
+    def get_env_variables(self, toplevel):
+        return {
+            **super().get_env_variables(toplevel=toplevel),
+            **{
+                "rev": str(self.rev),
+                "version_control": "svn"
+            }
+        }
+
     def __init__(self, name, url, directory, options, conf = {}, **kwargs):
         super().__init__(name, directory, options, conf = {}, **kwargs)
         self.rev = 'HEAD'
@@ -672,4 +705,3 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
         # actually write the file
         with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as f:
             f.write(cmakelists_data)
-
