@@ -325,7 +325,11 @@ To come back to our *blurlib* example, it would then become:
 
 ## Advanced dependencies features ##
 
+TODO
+
 ## CMake integration ##
+
+TODO
 
 ## The catalog ##
 
@@ -401,8 +405,9 @@ As a workaround, if certificate validation fails Quark tries to automatically fa
 
 ## Frozen dependencies (`freeze.quark`) ##
 
+TODO
 
----
+<!--
 
 # THIS STUFF IS FOR A LATER CHAPTER #
 
@@ -443,4 +448,4 @@ in turn, the top-level *blur-app* project can enable the *imagelib* option in th
 }
 ```
 
-
+-->
