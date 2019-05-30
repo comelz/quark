@@ -2,6 +2,8 @@
 
 Quark is a simple project dependency management system that works at source code level, although it can be used to fetch binary assets as well.
 
+***Disclaimer:** the manual is still incomplete, but piutost che nient l'è mei piutost.*
+
 ## Name ##
 
 For some reason, the original author was interested in the [Meson build system](https://mesonbuild.com/) when writing this tool, and it was thought that Quark would have been a nice companion. Other than that, there's no relation between them (indeed, it turns out that there's zero support for Meson in Quark).
