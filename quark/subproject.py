@@ -183,14 +183,19 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
                     current_module.options = conf.get('toplevel_options', {})
                     if options:
                         current_module.options.update(options)
-                for name, depobject in conf.get('depends', {}).items():
+
+                def do_add_module(name, depobject):
                     external_project = depobject.get('external_project', False)
                     add_module(current_module, name,
-                               freeze_dict.get(name, depobject.get('url', None)), depobject.get('options', {}),
+                               freeze_dict.get(name, depobject.get('url', None)),
+                               depobject.get('options', {}),
                                depobject,
                                exclude_from_cmake=depobject.get('exclude_from_cmake', external_project),
-                               external_project=external_project,
+                               external_project=external_project
                                )
+
+                for name, depobject in conf.get('depends', {}).items():
+                    do_add_module(name, depobject)
                 for key, optobjects in conf.get('optdepends', {}).items():
                     if isinstance(optobjects, dict):
                         optobjects = [optobjects]
@@ -201,10 +206,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
                             continue
                         if value == optobject['value']:
                             for name, depobject in optobject['depends'].items():
-                                add_module(current_module, name,
-                                           freeze_dict.get(name, depobject.get('url', None)),
-                                           depobject.get('options', {}),
-                                           depobject)
+                                do_add_module(name, depobject)
         root.set_local_ignores(subprojects_dir, modules.values())
         return root, modules
 
