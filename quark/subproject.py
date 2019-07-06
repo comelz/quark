@@ -305,7 +305,7 @@ class GitSubproject(Subproject):
                 fork(['git', 'init'])
                 fork(['git', 'remote', 'add', 'origin', self.url.geturl()])
                 fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
-                fork(['git', 'checkout', self.ref])
+                fork(['git', 'checkout', self.ref, '--'])
         else:
             # Regular case
             extra_opts = []
@@ -374,7 +374,7 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
                                 fork(['git', 'checkout', local_ref, '--'])
                                 fork(['git', 'merge', '--ff-only', self.ref, '--'])
                                 # Final sanity check
-                                if log_check_output(['git', 'rev-parse', self.ref]) != log_check_output(['git', 'rev-parse', local_ref]):
+                                if log_check_output(['git', 'rev-parse', self.ref, '--']) != log_check_output(['git', 'rev-parse', local_ref, '--']):
                                     logger.warning("Warning: your local branch is ahead of required remote branch!")
                                 return
                             except CalledProcessError:
@@ -419,7 +419,7 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
 
     def symbolic_full_name(self, ref):
         with cd(self.directory):
-            return log_check_output(['git', 'rev-parse', '--symbolic-full-name', ref]).strip().decode('utf-8')
+            return log_check_output(['git', 'rev-parse', '--symbolic-full-name', ref, '--']).split(b'\n')[0].strip().decode('utf-8')
 
     @staticmethod
     def url_from_directory(directory, include_commit = True):
