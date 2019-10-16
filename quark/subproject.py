@@ -695,7 +695,7 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
             # dump options and add to the generated CMakeLists.txt
             dump_options(module)
             if module is not root and exists(join(module.directory, "CMakeLists.txt")):
-                cmakelists_rows.append('add_subdirectory(%s)\n' % (module.directory))
+                cmakelists_rows.append('add_subdirectory(%s)\n' % (os.path.relpath(module.directory, subproject_dir)))
 
         process_module(root)
 
