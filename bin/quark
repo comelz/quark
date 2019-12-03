@@ -4,7 +4,7 @@ import os
 import sys
 import importlib
 bin_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(bin_dir, ".."))
+sys.path.insert(0, os.path.join(bin_dir, ".."))
 from quark import checkout, update, freeze, status
 from quark.entrypoints import commands, aliases
 
