@@ -8,6 +8,7 @@ import json
 import logging
 import errno
 import copy
+import re
 
 dependency_file = 'subprojects.quark'
 freeze_file = 'freeze.quark'
@@ -171,29 +172,9 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def cmake_escape(s):
-    ln = len(s)
-    mx = -1         # max number of equal signs inside a pair of ']'
-    i = 0           # current index
-    neq = 0         # current number of '='s after a ']'
-    c = None
-    while True:
-        i += 1
-        if i >= ln:
-            break
-        prevc = c
-        c = s[i]
-        if c == '=' and (neq > 0 or prevc == ']'):
-            neq += 1
-        elif c == ']':
-            if neq > mx:
-                mx = neq
-            neq = 0
-        else:
-            neq = 0
-    # +2 to avoid ambiguity in cases like s="]" or s=="xxxx]"
-    equals = ''.join(['='] * (mx+(2 if s.endswith(']') and mx == -1 else 1)))
+    # find longest equals sequence, add one equal
+    equals = max(re.findall('=+', s), key=len, default='') + '='
     return '[%s[%s]%s]' % (equals, s, equals)
-
 
 @contextmanager
 def DirectoryContext(newdir):
