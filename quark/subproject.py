@@ -5,7 +5,7 @@ from os.path import exists, join, isdir
 from shutil import rmtree
 from subprocess import call, PIPE, Popen, CalledProcessError, run
 from urllib.parse import urlparse
-from utils import cmake_escape
+from quark.utils import cmake_escape
 import shutil
 
 import xml.etree.ElementTree as ElementTree
