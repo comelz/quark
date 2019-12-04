@@ -8,6 +8,7 @@ import json
 import logging
 import errno
 import copy
+import re
 
 dependency_file = 'subprojects.quark'
 freeze_file = 'freeze.quark'
@@ -169,6 +170,11 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
+def cmake_escape(s):
+    # find longest equals sequence, add one equal
+    equals = max(re.findall('=+', s), key=len, default='') + '='
+    return '[%s[%s]%s]' % (equals, s, equals)
 
 @contextmanager
 def DirectoryContext(newdir):

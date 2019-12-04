@@ -5,6 +5,7 @@ from os.path import exists, join, isdir
 from shutil import rmtree
 from subprocess import call, PIPE, Popen, CalledProcessError, run
 from urllib.parse import urlparse
+from quark.utils import cmake_escape
 import shutil
 
 import xml.etree.ElementTree as ElementTree
@@ -695,7 +696,8 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
             # dump options and add to the generated CMakeLists.txt
             dump_options(module)
             if module is not root and exists(join(module.directory, "CMakeLists.txt")):
-                cmakelists_rows.append('add_subdirectory(%s)\n' % (os.path.relpath(module.directory, subproject_dir)))
+                subdir = os.path.relpath(module.directory, subproject_dir)
+                cmakelists_rows.append('add_subdirectory(%s)\n' % cmake_escape(subdir))
 
         process_module(root)
 
