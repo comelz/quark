@@ -36,6 +36,11 @@ def run():
         help="Only print error messages"
     )
     parser.add_argument(
+        "-t", "--type",
+        action="append",
+        help="Only iterate on the projects of the given type (git/svn); if repeated, all the specified types are matched"
+    )
+    parser.add_argument(
         "command",
         action="store",
         nargs=1,
@@ -51,6 +56,8 @@ def run():
     for path, module in sorted(modules.items()):
         cmd_env = dict(os.environ)
         cmd_env.update(module.get_env_variables(toplevel=os.getcwd()))
+        if optlist.type and cmd_env['version_control'] not in optlist.type:
+            continue
 
         with DirectoryContext(module.directory):
             if not optlist.quiet:
