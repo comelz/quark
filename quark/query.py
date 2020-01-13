@@ -16,8 +16,12 @@ def run():
     parser.add_argument(
         "attribute",
         action="store",
-        nargs=1,
         help="The attribute to query. At the moment only subprojects-dir is supported"
+    )
+    parser.add_argument(
+        "--abspath",
+        action="store_true",
+        help="For path attributes print the absolute path."
     )
 
     args = parser.parse_args()
@@ -26,12 +30,13 @@ def run():
     if conf is None:
         print("This is not a quark project. Aborting.")
         sys.exit(1)
-    if len(args.attribute) != 1:
-        print("Only one attribute can be queried.")
-        sys.exit(1)
-    attr = args.attribute[0]
+    attr = args.attribute
     if attr == "subprojects_dir":
-        print(os.path.join(source_dir, conf.get("subprojects_dir", 'lib')))
+        subprojects_dir = conf.get("subprojects_dir", 'lib')
+        if args.abspath:
+            print(os.path.join(source_dir, subprojects_dir))
+        else:
+            print(subprojects_dir)
     else:
         print("Unsupported attribute '%s'." % attr)
         sys.exit(1)
