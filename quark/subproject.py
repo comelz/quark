@@ -695,9 +695,12 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
                 process_module(c)
             # dump options and add to the generated CMakeLists.txt
             dump_options(module)
-            if module is not root and exists(join(module.directory, "CMakeLists.txt")):
+            if module is not root:
                 subdir = os.path.relpath(module.directory, subproject_dir)
-                cmakelists_rows.append('add_subdirectory(%s)\n' % cmake_escape(subdir))
+                if exists(join(module.directory, "quark.cmake")):
+                    cmakelists_rows.append('include(%s)\n' % cmake_escape(join(subdir, "quark.cmake")))
+                elif exists(join(module.directory, "CMakeLists.txt")):
+                    cmakelists_rows.append('add_subdirectory(%s)\n' % cmake_escape(subdir))
 
         process_module(root)
 
