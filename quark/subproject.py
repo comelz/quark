@@ -347,11 +347,16 @@ does not match what we expect (%r).
 
 Please either remove the local clone, or fix its remote.""" % (self.directory, current_origin, self.url.geturl()))
                 if self.conf.get("shallow", False):
-                    # Fetch just the commit we need
-                    fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
-                    # Notice that we need FETCH_HEAD, as the shallow clone does not recognize
-                    # origin/HEAD & co.
-                    fork(['git', 'checkout', 'FETCH_HEAD', '--'])
+                    # git fetch with shallow remotes isn't very smart, and re-fetches stuff
+                    # that we already have; optimize the common case (= nothing to do)
+                    remote_commit = log_check_output(['git', 'ls-remote', 'origin', self.noremote_ref()]).split(b'\t')[0].strip()
+                    local_commit = log_check_output(['git', 'rev-parse', 'HEAD', '--']).split(b'\n')[0].strip()
+                    if remote_commit != local_commit:
+                        # Fetch just the commit we need
+                        fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
+                        # Notice that we need FETCH_HEAD, as the shallow clone does not recognize
+                        # origin/HEAD & co.
+                        fork(['git', 'checkout', 'FETCH_HEAD', '--'])
                 else:
                     fork(['git', 'fetch'])
                     # If we want to go on a branch, try to find a local branch that tracks it
