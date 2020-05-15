@@ -347,11 +347,34 @@ does not match what we expect (%r).
 
 Please either remove the local clone, or fix its remote.""" % (self.directory, current_origin, self.url.geturl()))
                 if self.conf.get("shallow", False):
-                    # Fetch just the commit we need
-                    fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
-                    # Notice that we need FETCH_HEAD, as the shallow clone does not recognize
-                    # origin/HEAD & co.
-                    fork(['git', 'checkout', 'FETCH_HEAD', '--'])
+                    # git fetch with shallow clones isn't very smart, and
+                    # re-fetches stuff that we already have; try to avoid this
+
+                    # FIXME: the current approach means that shallow clones
+                    # will be in detached HEAD state to a commit pretty much
+                    # always.
+                    # Probably this is not a big problem because shallow repos
+                    # in Quark aren't meant to be used for actual repo work,
+                    # and the previous implementation always had FETCH_HEAD
+                    # checked out; however, in future it would be nice to have
+                    # a cleaner solution.
+
+                    if self.ref_type == 'commit':
+                        # Easy case: we already know exactly the commit we need
+                        remote_commit = self.ref
+                    else:
+                        # Ask the remote what we are expected to have here
+                        remote_commit = log_check_output(['git', 'ls-remote', 'origin', self.noremote_ref()]).split(b'\t')[0].strip().decode('utf-8')
+
+                    try:
+                        # Try to check it out; in the common case (nothing
+                        # changed) this should be a no-op
+                        fork(['git', 'checkout', remote_commit, '--'])
+                    except CalledProcessError:
+                        # Probably we don't have the commit; fetch it
+                        fork(['git', 'fetch', '--depth', '1', 'origin', remote_commit])
+                        # Try again
+                        fork(['git', 'checkout', remote_commit, '--'])
                 else:
                     fork(['git', 'fetch'])
                     # If we want to go on a branch, try to find a local branch that tracks it
