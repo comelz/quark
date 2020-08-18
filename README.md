@@ -204,7 +204,7 @@ As *blur-app* is an application for the true blur connoisseur, this feature is p
     "description": "blur-app subprojects.quark",
     "depends": [
         "blurlib": {
-            "option": { "BLURLIB_ENABLE_LUXURY_BLURS": true },
+            "options": { "BLURLIB_ENABLE_LUXURY_BLURS": true },
             "url": "svn+ssh://svn.example.com/svn/blurlib/trunk"
         },
         "widgetslib": { "url": "git+ssh://git@git.example.com/widgets-inc/widgets.git" },
@@ -366,7 +366,7 @@ will become something like
     "description": "blur-app subprojects.quark",
     "catalog": "https://catalog.example.com/quark-catalog.json",
     "depends": [
-        "blurlib":    { "option": { "BLURLIB_ENABLE_LUXURY_BLURS": true } },
+        "blurlib":    { "options": { "BLURLIB_ENABLE_LUXURY_BLURS": true } },
         "widgetslib": { },
         "imagelib":   { }
     ]
