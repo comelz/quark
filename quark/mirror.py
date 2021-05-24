@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from .subproject import generate_cmake_script, Subproject
+from .subproject import Subproject
 from .utils import parse_option
 import os
 

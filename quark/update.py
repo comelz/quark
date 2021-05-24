@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from .subproject import generate_cmake_script, Subproject, url_from_directory
+from .subproject import init_subprojects_dir, Subproject, url_from_directory
 from .utils import parse_option
 from os import getcwd
 from .utils import catalog_urls_overrides
@@ -41,7 +41,7 @@ def run():
         root_url = url_from_directory(source_dir, include_commit = False)
         root = Subproject.create("root", root_url, source_dir, {}, toplevel = True)
         root.update(optlist.clean)
-    generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options, clean=optlist.clean)
+    init_subprojects_dir(source_dir, print_tree=optlist.verbose, options=options, clean=optlist.clean)
 
 if __name__ == "__main__":
     run()

@@ -176,7 +176,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         while len(stack):
             current_module = stack.pop()
             if current_module.external_project:
-                generate_cmake_script(current_module.directory, update = update)
+                init_subprojects_dir(current_module.directory, update = update)
                 continue
             conf = load_conf(current_module.directory)
             if conf:
@@ -681,7 +681,59 @@ class SvnSubproject(Subproject):
         # Svn doesn't support local sandbox ignore lists
         pass
 
-def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True, clean=False):
+def generate_cmake_script(subproject_dir, root):
+    cmakelists_rows = []
+    processed = set()
+
+    def dump_options(module):
+        for key, value in sorted(module.options.items()):
+            if value is None:
+                cmakelists_rows.append('unset(%s CACHE)\n' % (key))
+                continue
+            elif isinstance(value, bool):
+                kind = "BOOL"
+                value = 'ON' if value else 'OFF'
+            else:
+                kind = "STRING"
+            cmakelists_rows.append('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
+
+    def process_module(module):
+        # notice: if a module is marked as excluded from cmake we also
+        # exclude its dependencies; they are nonetheless included if they
+        # are required by another module which is not excluded from cmake
+        if module.name in processed or module.exclude_from_cmake:
+            return
+        processed.add(module.name)
+        # first add the dependent modules
+        # module.children is a set, whose iteration order changes from run to run
+        # make this deterministic (we want to generate always the same CMakeLists.txt)
+        for c in sorted(module.children, key = lambda x: x.name):
+            process_module(c)
+        # dump options and add to the generated CMakeLists.txt
+        dump_options(module)
+        if module is not root:
+            subdir = os.path.relpath(module.directory, subproject_dir)
+            if exists(join(module.directory, "quark.cmake")):
+                cmakelists_rows.append('include(%s)\n' % cmake_escape(join(subdir, "quark.cmake")))
+            elif exists(join(module.directory, "CMakeLists.txt")):
+                cmakelists_rows.append('add_subdirectory(%s)\n' % cmake_escape(subdir))
+
+    process_module(root)
+
+    # write only if different
+    cmakelists_data = ''.join(cmakelists_rows)
+    try:
+        with open(join(subproject_dir, 'CMakeLists.txt'), 'r') as f:
+            if cmakelists_data == f.read():
+                # nothing to do, avoid touching the file (which often yields a full rebuild)
+                return
+    except IOError:
+        pass
+    # actually write the file
+    with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as f:
+        f.write(cmakelists_data)
+
+def init_subprojects_dir(source_dir, url=None, options=None, print_tree=False,update=True, clean=False):
     root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update, clean=clean)
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
@@ -689,53 +741,5 @@ def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,u
     if update and conf is not None:
         subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
 
-        cmakelists_rows = []
-        processed = set()
+        generate_cmake_script(subproject_dir, root)
 
-        def dump_options(module):
-            for key, value in sorted(module.options.items()):
-                if value is None:
-                    cmakelists_rows.append('unset(%s CACHE)\n' % (key))
-                    continue
-                elif isinstance(value, bool):
-                    kind = "BOOL"
-                    value = 'ON' if value else 'OFF'
-                else:
-                    kind = "STRING"
-                cmakelists_rows.append('set(%s %s CACHE INTERNAL "" FORCE)\n' % (key, value))
-
-        def process_module(module):
-            # notice: if a module is marked as excluded from cmake we also
-            # exclude its dependencies; they are nonetheless included if they
-            # are required by another module which is not excluded from cmake
-            if module.name in processed or module.exclude_from_cmake:
-                return
-            processed.add(module.name)
-            # first add the dependent modules
-            # module.children is a set, whose iteration order changes from run to run
-            # make this deterministic (we want to generate always the same CMakeLists.txt)
-            for c in sorted(module.children, key = lambda x: x.name):
-                process_module(c)
-            # dump options and add to the generated CMakeLists.txt
-            dump_options(module)
-            if module is not root:
-                subdir = os.path.relpath(module.directory, subproject_dir)
-                if exists(join(module.directory, "quark.cmake")):
-                    cmakelists_rows.append('include(%s)\n' % cmake_escape(join(subdir, "quark.cmake")))
-                elif exists(join(module.directory, "CMakeLists.txt")):
-                    cmakelists_rows.append('add_subdirectory(%s)\n' % cmake_escape(subdir))
-
-        process_module(root)
-
-        # write only if different
-        cmakelists_data = ''.join(cmakelists_rows)
-        try:
-            with open(join(subproject_dir, 'CMakeLists.txt'), 'r') as f:
-                if cmakelists_data == f.read():
-                    # nothing to do, avoid touching the file (which often yields a full rebuild)
-                    return
-        except IOError:
-            pass
-        # actually write the file
-        with open(join(subproject_dir, 'CMakeLists.txt'), 'w') as f:
-            f.write(cmakelists_data)
