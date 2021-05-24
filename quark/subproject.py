@@ -681,6 +681,15 @@ class SvnSubproject(Subproject):
         # Svn doesn't support local sandbox ignore lists
         pass
 
+def generate_clang_format(subprojects_dir):
+    clangformat_data = """{
+"DisableFormat": true,
+"SortIncludes": false
+}
+"""
+    with open(join(subprojects_dir, '.clang-format'), 'w') as f:
+        f.write(clangformat_data)
+
 def generate_cmake_script(subproject_dir, root):
     cmakelists_rows = []
     processed = set()
@@ -742,4 +751,5 @@ def init_subprojects_dir(source_dir, url=None, options=None, print_tree=False,up
         subproject_dir = join(source_dir, conf.get("subprojects_dir", 'lib'))
 
         generate_cmake_script(subproject_dir, root)
+        generate_clang_format(subproject_dir)
 
