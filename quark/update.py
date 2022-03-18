@@ -22,6 +22,10 @@ def run():
             action="append", help="Overrides the specified catalog URL with the provided one")
     parser.add_argument("-C", "--clean", action='store_true', default=False,
             help="Clean the dependency directory if has local modifications")
+    parser.add_argument("-f", "--clobber", action='store_true', default=False,
+            help="Removes existing subprojects directories before update, to force starting " +
+            "from scratch instead of trying to update existing clones. Removed directories " +
+            "are actually moved under a clobbered.quark directory, that must not already exist.")
     optlist = parser.parse_args()
     source_dir = optlist.source_directory or getcwd()
     options = {}
@@ -41,7 +45,7 @@ def run():
         root_url = url_from_directory(source_dir, include_commit = False)
         root = Subproject.create("root", root_url, source_dir, {}, toplevel = True)
         root.update(optlist.clean)
-    generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options, clean=optlist.clean)
+    generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options, clean=optlist.clean, clobber = optlist.clobber)
 
 if __name__ == "__main__":
     run()
