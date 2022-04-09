@@ -88,9 +88,12 @@ class Subproject:
         return res
 
     @staticmethod
-    def create_dependency_tree(source_dir, url=None, options=None, update=False, clean=False):
+    def create_dependency_tree(source_dir, url=None, options=None, update=False, clean=False, clobber=False):
         # make sure the separator is present
         source_dir_rp = os.path.join(os.path.abspath(source_dir), '')
+        clobber_backup_path = os.path.join(source_dir_rp, 'clobbered.quark')
+        if clobber and os.path.exists(clobber_backup_path):
+            raise QuarkError('clobbered.quark already exists; remove it to proceed')
         root_url = url
         try:
             root_url = url_from_directory(source_dir)
@@ -136,6 +139,25 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
             if mod is newmodule:
                 mod.parents.add(parent)
                 if update:
+                    if clobber and os.path.exists(mod.directory):
+                        # if we have to clobber and a subproject directory
+                        # already exists, move it out of the way
+
+                        # ensure we have a backup root
+                        os.makedirs(clobber_backup_path, exist_ok = True)
+                        # find a name for the backup directory; we may have to
+                        # deal with collisions, as the .. trick allows for
+                        # duplicated basenames between subprojects
+                        backup_path_base = os.path.join(clobber_backup_path, os.path.basename(mod.directory))
+                        backup_path = backup_path_base
+                        i = 0
+                        while True:
+                            if not os.path.exists(backup_path):
+                                break
+                            i += 1
+                            backup_path = '%s.%d' % (backup_path_base, i)
+                        print('%s already present; moving it to %s before new checkout' % (name, backup_path))
+                        shutil.move(mod.directory, backup_path)
                     mod.update(clean)
             else:
                 if newmodule.exclude_from_cmake != mod.exclude_from_cmake:
@@ -681,8 +703,8 @@ class SvnSubproject(Subproject):
         # Svn doesn't support local sandbox ignore lists
         pass
 
-def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True, clean=False):
-    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update, clean=clean)
+def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True, clean=False, clobber=False):
+    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update, clean=clean, clobber=clobber)
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
     conf = load_conf(source_dir)
