@@ -470,7 +470,10 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
     @staticmethod
     def url_from_directory(directory, include_commit = True):
         with cd(directory):
-            origin = log_check_output(['git', 'remote', 'get-url', 'origin'], universal_newlines=True)[:-1]
+            try:
+                origin = log_check_output(['git', 'remote', 'get-url', 'origin'], universal_newlines=True)[:-1]
+            except CalledProcessError:
+                raise QuarkError("Cannot obtain remote")
             commit = log_check_output(['git', 'log', '-1', '--format=%H'], universal_newlines=True)[:-1]
         ret = 'git+%s' % (origin,)
         if include_commit:
