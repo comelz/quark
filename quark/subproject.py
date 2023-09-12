@@ -198,7 +198,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         while len(stack):
             current_module = stack.pop()
             if current_module.external_project:
-                generate_cmake_script(current_module.directory, update = update)
+                generate_cmake_script(current_module.directory, update = update, clean = clean, clobber = clobber)
                 continue
             conf = load_conf(current_module.directory)
             if conf:
