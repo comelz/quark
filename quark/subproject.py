@@ -253,7 +253,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
     def checkout(self):
         raise NotImplementedError()
 
-    def update(self, clean=False):
+    def update(self, clean=False, fix_remotes=False):
         raise NotImplementedError()
 
     def status(self):
@@ -348,7 +348,7 @@ class GitSubproject(Subproject):
                     opts = [ local_branch ]
                 fork(['git', 'checkout'] + opts + ['--'])
 
-    def update(self, clean=False):
+    def update(self, clean=False, fix_remotes=False):
         def actualUpdate():
             with cd(self.directory):
                 try:
@@ -356,12 +356,11 @@ class GitSubproject(Subproject):
                 except CalledProcessError:
                     current_origin = None
                 if current_origin != self.url.geturl():
-                    # For now we just throw a fit; it shouldn't happen often,
-                    # and in this case there's no "right" answer - the repo may
-                    # have just moved, or we may be dealing with a completely
-                    # unrelated repo.
-                    # In future, it would be nice to be a bit more interactive
-                    raise QuarkError("""
+                    if fix_remotes:
+                        logger.info("Fixing incorrect remote in %s directory (%s -> %s)" % (self.directory, current_origin, self.url.geturl()))
+                        fork(['git', 'remote', 'set-url', 'origin', self.url.geturl()])
+                    else:
+                        raise QuarkError("""
 
 Directory '%s' is a git repository,
 but its remote 'origin' (%r)
@@ -617,7 +616,7 @@ class SvnSubproject(Subproject):
     def checkout(self):
         fork(['svn', 'checkout', self.url.geturl(), self.directory])
 
-    def update(self, clean=False):
+    def update(self, clean=False, fix_remotes=False):
         if not exists(self.directory):
             self.checkout()
         elif not exists(self.directory + "/.svn"):
