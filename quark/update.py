@@ -26,6 +26,9 @@ def run():
             help="Removes existing subprojects directories before update, to force starting " +
             "from scratch instead of trying to update existing clones. Removed directories " +
             "are actually moved under a clobbered.quark directory, that must not already exist.")
+    parser.add_argument("-F", "--fix-remotes", action="store_true", default=False,
+            help="If the remote of a git subproject doesn't match what we expect, force it " +
+            "to the expected value instead of giving up; useful if a repo moved.")
     optlist = parser.parse_args()
     source_dir = optlist.source_directory or getcwd()
     options = {}
@@ -45,7 +48,7 @@ def run():
         root_url = url_from_directory(source_dir, include_commit = False)
         root = Subproject.create("root", root_url, source_dir, {}, toplevel = True)
         root.update(optlist.clean)
-    generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options, clean=optlist.clean, clobber = optlist.clobber)
+    generate_cmake_script(source_dir, print_tree=optlist.verbose, options=options, clean=optlist.clean, clobber = optlist.clobber, fix_remotes = optlist.fix_remotes)
 
 if __name__ == "__main__":
     run()

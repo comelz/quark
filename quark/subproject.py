@@ -88,7 +88,7 @@ class Subproject:
         return res
 
     @staticmethod
-    def create_dependency_tree(source_dir, url=None, options=None, update=False, clean=False, clobber=False):
+    def create_dependency_tree(source_dir, url=None, options=None, update=False, clean=False, clobber=False, fix_remotes=False):
         # make sure the separator is present
         source_dir_rp = os.path.join(os.path.abspath(source_dir), '')
         clobber_backup_path = os.path.join(source_dir_rp, 'clobbered.quark')
@@ -158,7 +158,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
                             backup_path = '%s.%d' % (backup_path_base, i)
                         print('%s already present; moving it to %s before new checkout' % (name, backup_path))
                         shutil.move(mod.directory, backup_path)
-                    mod.update(clean)
+                    mod.update(clean, fix_remotes)
             else:
                 if newmodule.exclude_from_cmake != mod.exclude_from_cmake:
                     children_conf = [join(parent.directory, dependency_file) for parent in mod.parents]
@@ -198,7 +198,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         while len(stack):
             current_module = stack.pop()
             if current_module.external_project:
-                generate_cmake_script(current_module.directory, update = update)
+                generate_cmake_script(current_module.directory, update = update, clean = clean, clobber = clobber, fix_remotes=fix_remotes)
                 continue
             conf = load_conf(current_module.directory)
             if conf:
@@ -253,7 +253,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
     def checkout(self):
         raise NotImplementedError()
 
-    def update(self, clean=False):
+    def update(self, clean=False, fix_remotes=False):
         raise NotImplementedError()
 
     def status(self):
@@ -348,7 +348,7 @@ class GitSubproject(Subproject):
                     opts = [ local_branch ]
                 fork(['git', 'checkout'] + opts + ['--'])
 
-    def update(self, clean=False):
+    def update(self, clean=False, fix_remotes=False):
         def actualUpdate():
             with cd(self.directory):
                 try:
@@ -356,12 +356,11 @@ class GitSubproject(Subproject):
                 except CalledProcessError:
                     current_origin = None
                 if current_origin != self.url.geturl():
-                    # For now we just throw a fit; it shouldn't happen often,
-                    # and in this case there's no "right" answer - the repo may
-                    # have just moved, or we may be dealing with a completely
-                    # unrelated repo.
-                    # In future, it would be nice to be a bit more interactive
-                    raise QuarkError("""
+                    if fix_remotes:
+                        logger.info("Fixing incorrect remote in %s directory (%s -> %s)" % (self.directory, current_origin, self.url.geturl()))
+                        fork(['git', 'remote', 'set-url', 'origin', self.url.geturl()])
+                    else:
+                        raise QuarkError("""
 
 Directory '%s' is a git repository,
 but its remote 'origin' (%r)
@@ -617,7 +616,7 @@ class SvnSubproject(Subproject):
     def checkout(self):
         fork(['svn', 'checkout', self.url.geturl(), self.directory])
 
-    def update(self, clean=False):
+    def update(self, clean=False, fix_remotes=False):
         if not exists(self.directory):
             self.checkout()
         elif not exists(self.directory + "/.svn"):
@@ -706,8 +705,8 @@ class SvnSubproject(Subproject):
         # Svn doesn't support local sandbox ignore lists
         pass
 
-def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True, clean=False, clobber=False):
-    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update, clean=clean, clobber=clobber)
+def generate_cmake_script(source_dir, url=None, options=None, print_tree=False,update=True, clean=False, clobber=False, fix_remotes = False):
+    root, modules = Subproject.create_dependency_tree(source_dir, url, options, update=update, clean=clean, clobber=clobber, fix_remotes = fix_remotes)
     if print_tree:
         print(json.dumps(root.toJSON(), indent=4))
     conf = load_conf(source_dir)
