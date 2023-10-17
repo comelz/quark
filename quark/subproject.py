@@ -64,7 +64,7 @@ class Subproject:
     @staticmethod
     def _parse_fragment(url):
         res = {}
-        for equality in url.fragment.split():
+        for equality in url.fragment.split("&"):
             index = equality.find('=')
             key = equality[:index]
             value = equality[index + 1:]
