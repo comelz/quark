@@ -110,7 +110,7 @@ def load_conf(folder):
     else:
         return None
 
-def print_cmd(cmd, comment = "", stream = sys.stdout):
+def print_msg(msg, comment = "", stream = sys.stdout):
     if comment:
         comment = " (" + comment + ")"
     yellow = green = reset = blue = ""
@@ -122,10 +122,13 @@ def print_cmd(cmd, comment = "", stream = sys.stdout):
     stream.write(
         yellow + "quark: " +
         green + os.getcwd() + reset + '$ ' +
-        ' '.join(cmd) +
+        msg +
         blue + comment +
         reset + "\n")
     stream.flush()
+
+def print_cmd(cmd, comment = "", stream = sys.stdout):
+    print_msg(" ".join(cmd), comment, stream)
 
 def fork(*args, **kwargs):
     print_cmd(args[0])
