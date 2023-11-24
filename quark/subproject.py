@@ -717,6 +717,8 @@ class SvnSubproject(Subproject):
         pass
 
 class GitlabSubproject(Subproject):
+    GITLAB_TOKEN_HEADER = "PRIVATE-TOKEN"
+
     PROGRESS_ICONS = itertools.cycle([
         "o...",
         ".o..",
@@ -786,9 +788,7 @@ class GitlabSubproject(Subproject):
 
         url = urllib.parse.urlparse(stamp["url"])
         if url.scheme == "gitlab+ci" and not stamp["job_id"]:
-            raise QuarkError("Missing job_id in stamp file: " + stamp_file + " "
-                             "(You may want to perform the initial download with a " +
-                             "Private Access Token instead of using a CI job token)")
+            raise QuarkError("Missing job_id in stamp file: " + stamp_file)
 
         # Generate frozen URL.
         new_fragments = ["sha1=" + stamp["sha1"]]
@@ -809,16 +809,7 @@ class GitlabSubproject(Subproject):
         for var in ("QUARK_GITLAB_PRIVATE_TOKEN", "GITLAB_PRIVATE_TOKEN", "GITLAB_TOKEN"):
             if var in os.environ:
                 self.gitlab_token = os.environ[var]
-                self.gitlab_token_header = "PRIVATE-TOKEN"
-                self.gitlab_token_is_pat = True  # Is this a Personal/Private Access Token? (PAT)
                 return
-
-        # If we're running in a CI job, use the CI_JOB_TOKEN.
-        if "CI_JOB_TOKEN" in os.environ:
-            self.gitlab_token = os.environ["CI_JOB_TOKEN"]
-            self.gitlab_token_header = "JOB-TOKEN"
-            self.gitlab_token_is_pat = False  # Is this a Personal/Private Access Token? (PAT)
-            return
 
         raise QuarkError("Missing authentication token.")
 
@@ -851,35 +842,21 @@ class GitlabSubproject(Subproject):
 
             artifact_path = "/".join(parts[parts.index("artifacts") + 1 :])
 
-            if "ref" in fragments and not self.gitlab_token_is_pat:
-                # NOTE: We have "ref" and "job" but we don't have a Personal Access Token (PAT). We
-                # can't resolve the job ID using the API and a CI job token can't be used for this.
-                #
-                # TODO: Find a way to resolve the job ID without requiring private tokens so that we
-                # can use a single endpoint (and we can always store the job ID inside the stamp
-                # file).
-                self.parsed_endpoint_url = "/projects/%s/jobs/artifacts/%s/raw/%s?job=%s" % (
-                    urllib.parse.quote_plus(self.parsed_project_name),
-                    urllib.parse.quote_plus(fragments["ref"]),
-                    artifact_path,
-                    urllib.parse.quote_plus(fragments["job"]),
+            if "ref" in fragments:
+                print_msg("resolving job id for " + self.parsed_artifact_name, self._comment())
+                job = self.stamp["job_id"] = self._resolve_job_id(
+                    self.parsed_project_name,
+                    fragments["ref"],
+                    fragments["job"],
                 )
             else:
-                if "ref" in fragments and self.gitlab_token_is_pat:
-                    print_msg("resolving job id for " + self.parsed_artifact_name, self._comment())
-                    job = self.stamp["job_id"] = self._resolve_job_id(
-                        self.parsed_project_name,
-                        fragments["ref"],
-                        fragments["job"],
-                    )
-                else:
-                    job = self.stamp["job_id"] = str(fragments["job"])
+                job = self.stamp["job_id"] = str(fragments["job"])
 
-                self.parsed_endpoint_url = "/projects/%s/jobs/%s/artifacts/%s" % (
-                    urllib.parse.quote_plus(self.parsed_project_name),
-                    job,
-                    artifact_path,
-                )
+            self.parsed_endpoint_url = "/projects/%s/jobs/%s/artifacts/%s" % (
+                urllib.parse.quote_plus(self.parsed_project_name),
+                job,
+                artifact_path,
+            )
         elif url.scheme == "gitlab+package":
             project_name, package_name, package_version, package_file_name = url.path.rsplit("/", 3)
 
@@ -905,7 +882,7 @@ class GitlabSubproject(Subproject):
                 urllib.parse.quote_plus(ref),
             ),
             headers={
-                self.gitlab_token_header: self.gitlab_token,
+                self.GITLAB_TOKEN_HEADER: self.gitlab_token,
             },
         )
 
@@ -923,7 +900,7 @@ class GitlabSubproject(Subproject):
                 pipeline["id"],
             ),
             headers={
-                self.gitlab_token_header: self.gitlab_token,
+                self.GITLAB_TOKEN_HEADER: self.gitlab_token,
             },
         )
 
@@ -950,7 +927,7 @@ class GitlabSubproject(Subproject):
         req = urllib.request.Request(
             url="%s/api/v4/%s" % (self.gitlab_url, self.parsed_endpoint_url.lstrip("/")),
             headers={
-                self.gitlab_token_header: self.gitlab_token,
+                self.GITLAB_TOKEN_HEADER: self.gitlab_token,
             },
         )
 
