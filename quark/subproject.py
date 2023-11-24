@@ -790,13 +790,17 @@ class GitlabSubproject(Subproject):
         if url.scheme == "gitlab+ci" and not stamp["job_id"]:
             raise QuarkError("Missing job_id in stamp file: " + stamp_file)
 
-        # Generate frozen URL.
-        new_fragments = ["sha1=" + stamp["sha1"]]
+        # Generate frozen URL with absolute "artifact coordinates" by merging information from stamp
+        # file with user-supplied URL.
+        fragments = self._parse_fragment(url)
+        fragments["sha1"] = stamp["sha1"]
         if stamp["job_id"]:
-            new_fragments.append("job=" + stamp["job_id"])
+            fragments["job"] = stamp["job_id"]
+        if "ref" in fragments:
+            del fragments["ref"]
 
-        new_url = urllib.parse.urlparse(stamp["url"])
-        new_url = new_url._replace(fragment="&".join(new_fragments))
+        new_fragment = "&".join(["%s=%s" % (k, v) for k, v in sorted(fragments.items())])
+        new_url = url._replace(fragment=new_fragment)
 
         return urllib.parse.urlunparse(new_url)
 
