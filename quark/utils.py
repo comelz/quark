@@ -114,7 +114,7 @@ def print_msg(msg, comment = "", stream = sys.stdout):
     if comment:
         comment = " (" + comment + ")"
     yellow = green = reset = blue = ""
-    if os.isatty(stream.fileno()):
+    if stream.isatty():
         yellow = "\x1b[33m"
         green = "\x1b[32m"
         reset = "\x1b[30m\x1b(B\x1b[m"

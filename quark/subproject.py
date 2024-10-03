@@ -952,7 +952,7 @@ class GitlabSubproject(Subproject):
         size = 0
         with open(dest, "wb") as output:
             for icon, chunk in zip(self.PROGRESS_ICONS, self._iter_chunks(req)):
-                if os.isatty(sys.stdout.fileno()):
+                if sys.stdout.isatty():
                     print("Downloading %s %.2fMB\r" % (icon, size / (1024 * 1024)), end="")
                 output.write(chunk)
                 digestobj.update(chunk)
