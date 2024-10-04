@@ -22,5 +22,7 @@ jobs:
           git config --global user.email test
       - name: Install cram
         run: pip install cram
+      - name: Run unit tests
+        run: python3 -m unittest discover -v
       - name: Run integration tests
         run: cram tests
