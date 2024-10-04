@@ -1,2 +1,3 @@
 *.pyc
 quark.egg-info/*
+__pycache__/
