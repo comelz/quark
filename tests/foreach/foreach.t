@@ -16,10 +16,10 @@
   > cd ..
 
 # Setup the fake git repos
-  $ cd test_dir_1 && git init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
-  $ cd test_dir_2 && git init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
-  $ cd test_dir_3 && git init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
-  $ cd test_dir_4 && git init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
+  $ cd test_dir_1 && git -c init.defaultBranch=initial init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
+  $ cd test_dir_2 && git -c init.defaultBranch=initial init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
+  $ cd test_dir_3 && git -c init.defaultBranch=initial init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
+  $ cd test_dir_4 && git -c init.defaultBranch=initial init > /dev/null && git add * && git commit -m "1st commit" > /dev/null && cd ..
 
 # Clone the root testing git repo
   $ cd $CRAMPTESTDIR

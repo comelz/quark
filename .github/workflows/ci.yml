@@ -1,0 +1,26 @@
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.8"  # Found on Ubuntu 20.04
+          - "3.10" # Found on Ubuntu 22.04
+          - "3.12" # Found on Ubuntu 24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up Git inside test environment
+        run: |
+          git config --global user.name test
+          git config --global user.email test
+      - name: Install cram
+        run: pip install cram
+      - name: Run integration tests
+        run: cram tests
