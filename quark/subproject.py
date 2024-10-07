@@ -74,7 +74,11 @@ class Subproject:
     def _parse_fragment(url):
         res = {}
         for equality in url.fragment.split("&"):
+            if equality == '':
+                continue
             index = equality.find('=')
+            if index < 0:
+                index = len(equality)
             key = equality[:index]
             value = equality[index + 1:]
             res[key] = value
@@ -847,7 +851,7 @@ class GitlabSubproject(Subproject):
             artifact_path = "/".join(parts[parts.index("artifacts") + 1 :])
 
             if "ref" in fragments:
-                print_msg("resolving job id for " + self.parsed_artifact_name, self._comment())
+                print_msg("resolving job id for " + self.parsed_artifact_name, self._print_msg_comment())
                 job = self.stamp["job_id"] = self._resolve_job_id(
                     self.parsed_project_name,
                     fragments["ref"],
@@ -921,7 +925,7 @@ class GitlabSubproject(Subproject):
         assert self.parsed_artifact_name  # Make Pyright happy
         assert self.parsed_endpoint_url  # Make Pyright happy
 
-        print_msg("downloading " + self.parsed_artifact_name, self._comment())
+        print_msg("downloading " + self.parsed_artifact_name, self._print_msg_comment())
 
         dl_dir = join(tempdir, "dl")
         archive_path = join(dl_dir, self.parsed_artifact_name)
@@ -939,7 +943,7 @@ class GitlabSubproject(Subproject):
             sha1 = self._download_and_hash_with_progress(response, archive_path)
 
         # Verify or update the SHA1
-        print_msg("verifying " + self.parsed_artifact_name, self._comment())
+        print_msg("verifying " + self.parsed_artifact_name, self._print_msg_comment())
         if self.stamp["sha1"] and sha1 != self.stamp["sha1"]:
             raise QuarkError("SHA1 mismatch: %s != %s" % (sha1, self.stamp["sha1"]))
 
@@ -952,7 +956,7 @@ class GitlabSubproject(Subproject):
         size = 0
         with open(dest, "wb") as output:
             for icon, chunk in zip(self.PROGRESS_ICONS, self._iter_chunks(req)):
-                if os.isatty(sys.stdout.isatty()):
+                if sys.stdout.isatty():
                     print("Downloading %s %.2fMB\r" % (icon, size / (1024 * 1024)), end="")
                 output.write(chunk)
                 digestobj.update(chunk)
@@ -969,7 +973,7 @@ class GitlabSubproject(Subproject):
     def _extract(self, archive_path: str, tempdir: str):
         assert self.directory  # Make Pyright happy
 
-        print_msg("extracting " + self.parsed_artifact_name, self._comment())
+        print_msg("extracting " + self.parsed_artifact_name, self._print_msg_comment())
 
         extract_dir = join(tempdir, "extract")
         os.mkdir(extract_dir)
@@ -987,7 +991,7 @@ class GitlabSubproject(Subproject):
         for i in os.listdir(extract_dir):
             shutil.move(join(extract_dir, i), self.directory)
 
-    def _comment(self) -> str:
+    def _print_msg_comment(self) -> str:
         ret = "from " + self.parsed_project_name
         if self.parsed_ref:
             ret += ", ref: " + self.parsed_ref
