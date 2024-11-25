@@ -832,7 +832,9 @@ class GitlabSubproject(Subproject):
         self.stamp["sha1"] = fragments.get("sha1")
 
         # Wether to extract the downloaded file (must be either zip, tar.bz2, tar.gz, or tar.xz)
-        self.do_extract = fragments.get("extract", "").lower() == "true"
+        extract = fragments.get("extract", "").lower()
+        self.do_extract = extract in {"true", "zip", "tar"}
+        self.extract_format = extract  # "true" is an alias for "auto"
 
         # Whether to make the downloaded file executable.
         self.make_executable = fragments.get("executable", "").lower() == "true"
@@ -981,10 +983,10 @@ class GitlabSubproject(Subproject):
         extract_dir = join(tempdir, "extract")
         os.mkdir(extract_dir)
 
-        if archive_path.endswith((".tar.bz2", ".tar.gz", ".tar.xz")):
+        if archive_path.endswith((".tar.bz2", ".tar.gz", ".tar.xz")) or self.extract_format == "tar":
             with tarfile.open(archive_path, "r") as tar:
                 tar.extractall(extract_dir)
-        elif archive_path.endswith(".zip"):
+        elif archive_path.endswith(".zip") or self.extract_format == "zip":
             with zipfile.ZipFile(archive_path, "r") as zip:
                 zip.extractall(extract_dir)
         else:
