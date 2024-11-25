@@ -829,42 +829,45 @@ class GitlabSubproject(Subproject):
         self.parsed_ref = None
         self.parsed_pkg = None
 
-        self.stamp["sha1"] = fragments.get("sha1")
+        self.stamp["sha1"] = fragments.pop("sha1", None)
 
-        # Wether to extract the downloaded file (must be either zip, tar.bz2, tar.gz, or tar.xz)
-        self.do_extract = fragments.get("extract", "").lower() == "true"
+        # Whether to extract the downloaded file (must be either zip, tar.bz2, tar.gz, or tar.xz)
+        self.do_extract = fragments.pop("extract", "").lower() == "true"
 
         # Whether to make the downloaded file executable.
-        self.make_executable = fragments.get("executable", "").lower() == "true"
+        self.make_executable = fragments.pop("executable", "").lower() == "true"
 
         if url.scheme == "gitlab+ci":
             if "job" not in fragments:
-                raise QuarkError("Missing job fragment in URL: " + url)
+                raise QuarkError("Missing 'job' fragment in URL: " + url)
+            if "artifacts" not in url.path:
+                raise QuarkError("Missing 'artifacts' segment in URL: " + url)
 
-            parts = url.path.split("/")
+            # gitlab+ci://<host>/<project>/artifacts[/<path>]#ref=master&job=build
+            project_name, artifact_path = [p for p in url.path.strip("/").split("artifacts", 1)]
 
-            self.parsed_project_name = "/".join(parts[0 : parts.index("artifacts")]).strip("/")
-            self.parsed_artifact_name = parts[-1]
-            self.parsed_job = fragments.get("job")
-            self.parsed_ref = fragments.get("ref")
+            self.parsed_project_name = project_name.strip("/")
+            self.parsed_artifact_name = artifact_path.split("/")[-1] or "artifacts"
+            self.parsed_job = fragments.pop("job")
+            self.parsed_ref = fragments.pop("ref", None)
 
-            artifact_path = "/".join(parts[parts.index("artifacts") + 1 :])
-
-            if "ref" in fragments:
+            if self.parsed_ref:
                 print_msg("resolving job id for " + self.parsed_artifact_name, self._print_msg_comment())
                 job = self.stamp["job_id"] = self._resolve_job_id(
                     self.parsed_project_name,
-                    fragments["ref"],
-                    fragments["job"],
+                    self.parsed_ref,
+                    self.parsed_job,
                 )
             else:
-                job = self.stamp["job_id"] = str(fragments["job"])
+                job = self.stamp["job_id"] = str(self.parsed_job)
 
             self.parsed_endpoint_url = "/projects/%s/jobs/%s/artifacts/%s" % (
                 urllib.parse.quote_plus(self.parsed_project_name),
                 job,
                 artifact_path,
             )
+            if fragments:
+                logger.warning("Unused fragments in url: %r" %  (fragments,))
         elif url.scheme == "gitlab+package":
             project_name, package_name, package_version, package_file_name = url.path.rsplit("/", 3)
 
@@ -902,7 +905,7 @@ class GitlabSubproject(Subproject):
 
         # Jobs in latest pipeline
         req = urllib.request.Request(
-            url="%s/api/v4/projects/%s/pipelines/%s/jobs?scope=success" % (
+            url="%s/api/v4/projects/%s/pipelines/%s/jobs?scope=success&include_retried=true&per_page=50" % (
                 self.gitlab_url,
                 urllib.parse.quote_plus(project),
                 pipeline["id"],
@@ -915,11 +918,17 @@ class GitlabSubproject(Subproject):
         with urllib.request.urlopen(req) as response:
             jobs = json.loads(response.read().decode("utf-8"))
 
+        similar_jobs = []
         for job in jobs:
             if job["name"] == job_name:
                 return str(job["id"])
+            elif job_name in job["name"]:
+                similar_jobs.append(job["name"])
 
-        raise QuarkError("Could not find job %s in pipeline %s" % (job_name, pipeline["id"]))
+        if similar_jobs:
+            raise QuarkError("Could not find job %s in pipeline %s, similar jobs are:\n\t%s" % (job_name, pipeline["id"], "\n\t".join(similar_jobs)))
+        else:
+            raise QuarkError("Could not find job %s in pipeline %s" % (job_name, pipeline["id"]))
 
     def _download(self, tempdir: str) -> str:
         assert self.parsed_artifact_name  # Make Pyright happy
@@ -928,7 +937,6 @@ class GitlabSubproject(Subproject):
         print_msg("downloading " + self.parsed_artifact_name, self._print_msg_comment())
 
         dl_dir = join(tempdir, "dl")
-        archive_path = join(dl_dir, self.parsed_artifact_name)
 
         os.mkdir(dl_dir)
 
@@ -941,6 +949,8 @@ class GitlabSubproject(Subproject):
 
         try:
             with urllib.request.urlopen(req) as response:
+                self.parsed_artifact_name = response.headers.get_filename(self.parsed_artifact_name)
+                archive_path = join(dl_dir, self.parsed_artifact_name)
                 sha1 = self._download_and_hash_with_progress(response, archive_path)
         except Exception as err:
             raise QuarkError(f"Error downloading '{req.full_url}'") from err
