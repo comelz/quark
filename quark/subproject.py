@@ -902,7 +902,7 @@ class GitlabSubproject(Subproject):
 
         # Jobs in latest pipeline
         req = urllib.request.Request(
-            url="%s/api/v4/projects/%s/pipelines/%s/jobs" % (
+            url="%s/api/v4/projects/%s/pipelines/%s/jobs?scope=success" % (
                 self.gitlab_url,
                 urllib.parse.quote_plus(project),
                 pipeline["id"],
