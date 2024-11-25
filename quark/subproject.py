@@ -939,8 +939,11 @@ class GitlabSubproject(Subproject):
             },
         )
 
-        with urllib.request.urlopen(req) as response:
-            sha1 = self._download_and_hash_with_progress(response, archive_path)
+        try:
+            with urllib.request.urlopen(req) as response:
+                sha1 = self._download_and_hash_with_progress(response, archive_path)
+        except Exception as err:
+            raise QuarkError(f"Error downloading '{req.full_url}'") from err
 
         # Verify or update the SHA1
         print_msg("verifying " + self.parsed_artifact_name, self._print_msg_comment())
