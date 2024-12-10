@@ -138,7 +138,7 @@ Also, a `CMakeLists.txt` has been generated that refers to all the subprojects i
 
 Quark refers to project URLs in various places, most importantly in the `"url"` field of dependency objects and in the `freeze.quark` file; a project URL identifies the VCS to use to fetch the project, the location where the project is stored down to the branch/tag/commit to extract.
 
-The protocol part of an URL (the part before `://`) is used to identify what VCS to use; URLs starting with `svn+` are handled by Subversion, while those starting with `git+` refer to git repositories.
+The protocol part of an URL (the part before `://`) is used to identify what VCS to use; URLs starting with `svn+` are handled by Subversion, while those starting with `git+` refer to git repositories. Additionally, URLs starting with `gitlab+` are used to download artifacts from [GitLab CI pipelines](https://docs.gitlab.com/ee/ci/pipelines/) or from the [Generic Packages Registry](https://docs.gitlab.com/ee/user/packages/generic_packages/).
 
 #### Subversion ####
 
@@ -169,6 +169,48 @@ Notice that this means that untracked files and whatever other garbage is left t
 In Git URLs are generally used only to represent remotes, so some extra syntax has to be used to specify exactly what ref is to be extracted; the source of inspiration here are [sources for Arch Linux PKGBUILD files](https://wiki.archlinux.org/index.php/VCS_package_guidelines#VCS_sources), so `commit`, `branch` and `tag` fragments can be specified.
 
 The update process for a git repository is essentially a `git fetch` + `git checkout`. As the specified refs are always relative to the remote, after Quark does his thing (checking out e.g. `origin/master`) the repository will be in detached head state; as this is often inconvenient, it's in the plans to add some heuristic to check out the corresponding local tracking branch, if available.
+
+#### GitLab Artifacts from Generic Package Registry ####
+
+NOTE: For this to work you need to set the `QUARK_GITLAB_PRIVATE_TOKEN` environment variable to a
+[GitLab Personal Access Token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
+with the `read_api` scope.
+
+    # Download a single binary
+    gitlab+package://gitlab.example.com/widgets-inc/widgets/widgets-demo/1.0.0/demo.exe
+    # Download a single binary, with expected SHA1 hash
+    gitlab+package://gitlab.example.com/widgets-inc/widgets/widgets-demo/1.0.0/demo.exe#sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+    # Extract an archive (.tar.gz, .tar.bz2, .tar.xz, and .zip are supported)
+    gitlab+package://gitlab.example.com/widgets-inc/widgets/widgets-package/1.0.0/package.tar.gz#extract=true
+    # Extract an archive, with expected SHA1 hash of the archive itself
+    gitlab+package://gitlab.example.com/widgets-inc/widgets/widgets-package/1.0.0/package.tar.gz#extract=true&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+
+The URL format is:
+
+    gitlab+package://<gitlab host>/<project path>/<package name>/<package version>/<package asset to download>
+
+#### GitLab Artifacts from CI pipelines ####
+
+NOTE: For this to work you need to set the `QUARK_GITLAB_PRIVATE_TOKEN` environment variable to a
+[GitLab Personal Access Token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
+with the `read_api` scope.
+
+    # Download an artifact from the given job on the latest successful pipeline on the given ref
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.dll#ref=1.0.0&job=build-win32
+    # Extract an archive from the given job on the latest successful pipeline on the given ref (.tar.gz, .tar.bz2, .tar.xz, and .zip are supported)
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.tar.gz#ref=1.0.0&job=build-win32&extract=true
+    # Extract an archive from the given job on the latest successful pipeline on the given ref, with expected SHA1 hash of the archive itself
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.tar.gz#ref=1.0.0&job=build-win32&extract=true&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+    # Download an artifact from the given job id
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.dll#job=1234
+    # Download an artifact from the given job id, with expected SHA1 hash
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.dll#job=1234&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+    # Extract an archive from the given job id, with expected SHA1 hash of the archive itself
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.tar.gz#job=1234&extract=true&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+
+The URL format is:
+
+    gitlab+ci://<gitlab host>/<project path>/artifacts/<artifact's path>
 
 ### Options and optional dependencies ###
 
