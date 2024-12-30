@@ -839,7 +839,7 @@ class GitlabSubproject(Subproject):
 
         if url.scheme == "gitlab+ci":
             if "job" not in fragments:
-                raise QuarkError("Missing job fragment in URL: " + url.geturl())
+                raise QuarkError("Missing 'job' fragment in URL: " + url.geturl())
 
             parts = url.path.split("/")
 
