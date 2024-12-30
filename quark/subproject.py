@@ -831,7 +831,7 @@ class GitlabSubproject(Subproject):
 
         self.stamp["sha1"] = fragments.get("sha1")
 
-        # Wether to extract the downloaded file (must be either zip, tar.bz2, tar.gz, or tar.xz)
+        # Whether to extract the downloaded file (must be either zip, tar.bz2, tar.gz, or tar.xz)
         self.do_extract = fragments.get("extract", "").lower() == "true"
 
         # Whether to make the downloaded file executable.
