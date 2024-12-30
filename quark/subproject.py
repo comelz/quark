@@ -928,7 +928,6 @@ class GitlabSubproject(Subproject):
         print_msg("downloading " + self.parsed_artifact_name, self._print_msg_comment())
 
         dl_dir = join(tempdir, "dl")
-        archive_path = join(dl_dir, self.parsed_artifact_name)
 
         os.mkdir(dl_dir)
 
@@ -941,6 +940,16 @@ class GitlabSubproject(Subproject):
 
         try:
             with urllib.request.urlopen(req) as response:
+                # NOTE: The response filename (i.e. the one returned in the Content-Disposition
+                # header) is used to allow extraction of the entire artifacts zip from a CI pipeline
+                # without having to change the self._extract() format detection logic (which is
+                # based on the file's extension).
+                #
+                # GitLab's API seemingly always returns "artifacts.zip" when requesting
+                # "/artifacts", whereas in all other cases it will just return the requested
+                # filename.
+                response_filename = response.headers.get_filename(self.parsed_artifact_name)
+                archive_path = join(dl_dir, response_filename)
                 sha1 = self._download_and_hash_with_progress(response, archive_path)
         except Exception as err:
             raise QuarkError(f"Error downloading '{req.full_url}'") from err

@@ -195,6 +195,8 @@ NOTE: For this to work you need to set the `QUARK_GITLAB_PRIVATE_TOKEN` environm
 [GitLab Personal Access Token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
 with the `read_api` scope.
 
+Download a single artifact from the artifacts archive:
+
     # Download an artifact from the given job on the latest successful pipeline on the given ref
     gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.dll#ref=1.0.0&job=build-win32
     # Extract an archive from the given job on the latest successful pipeline on the given ref (.tar.gz, .tar.bz2, .tar.xz, and .zip are supported)
@@ -207,6 +209,21 @@ with the `read_api` scope.
     gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.dll#job=1234&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
     # Extract an archive from the given job id, with expected SHA1 hash of the archive itself
     gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.tar.gz#job=1234&extract=true&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+
+Download the entire artifacts archive:
+
+    # Download the artifact archive from the given job on the latest successful pipeline on the given ref
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts#ref=1.0.0&job=build-win32
+    # Extract the artifact archive from the given job on the latest successful pipeline on the given ref (.tar.gz, .tar.bz2, .tar.xz, and .zip are supported)
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts#ref=1.0.0&job=build-win32&extract=true
+    # Extract the artifacts archive from the given job on the latest successful pipeline on the given ref, with expected SHA1 hash of the archive itself
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts#ref=1.0.0&job=build-win32&extract=true&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+    # Download the artifact archive from the given job id
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts#job=1234
+    # Download the artifact archive from the given job id, with expected SHA1 hash
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts#job=1234&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
+    # Extract the artifact archive from the given job id, with expected SHA1 hash of the archive itself
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts#job=1234&extract=true&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
 
 The URL format is:
 
