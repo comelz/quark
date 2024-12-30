@@ -839,7 +839,7 @@ class GitlabSubproject(Subproject):
 
         if url.scheme == "gitlab+ci":
             if "job" not in fragments:
-                raise QuarkError("Missing job fragment in URL: " + url)
+                raise QuarkError("Missing job fragment in URL: " + url.geturl())
 
             parts = url.path.split("/")
 
@@ -876,7 +876,7 @@ class GitlabSubproject(Subproject):
                 self.parsed_pkg,
             )
         else:
-            raise QuarkError("Unsupported URL: " + url)
+            raise QuarkError("Unsupported URL: " + url.geturl())
 
     def _resolve_job_id(self, project: str, ref: str, job_name: str) -> str:
         # NOTE: This method requires an API token. A CI job token isn't sufficient. As such, this
