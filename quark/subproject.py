@@ -831,7 +831,7 @@ class GitlabSubproject(Subproject):
 
         self.stamp["sha1"] = fragments.get("sha1")
 
-        # Wether to extract the downloaded file (must be either zip, tar.bz2, tar.gz, or tar.xz)
+        # Whether to extract the downloaded file (must be either zip, tar.bz2, tar.gz, or tar.xz)
         self.do_extract = fragments.get("extract", "").lower() == "true"
 
         # Whether to make the downloaded file executable.
@@ -839,7 +839,7 @@ class GitlabSubproject(Subproject):
 
         if url.scheme == "gitlab+ci":
             if "job" not in fragments:
-                raise QuarkError("Missing job fragment in URL: " + url)
+                raise QuarkError("Missing 'job' fragment in URL: " + url.geturl())
 
             parts = url.path.split("/")
 
@@ -876,7 +876,7 @@ class GitlabSubproject(Subproject):
                 self.parsed_pkg,
             )
         else:
-            raise QuarkError("Unsupported URL: " + url)
+            raise QuarkError("Unsupported URL: " + url.geturl())
 
     def _resolve_job_id(self, project: str, ref: str, job_name: str) -> str:
         # NOTE: This method requires an API token. A CI job token isn't sufficient. As such, this
@@ -902,7 +902,7 @@ class GitlabSubproject(Subproject):
 
         # Jobs in latest pipeline
         req = urllib.request.Request(
-            url="%s/api/v4/projects/%s/pipelines/%s/jobs?scope=success" % (
+            url="%s/api/v4/projects/%s/pipelines/%s/jobs?scope=success&include_retried=true&page=1&per_page=100" % (
                 self.gitlab_url,
                 urllib.parse.quote_plus(project),
                 pipeline["id"],
@@ -928,7 +928,6 @@ class GitlabSubproject(Subproject):
         print_msg("downloading " + self.parsed_artifact_name, self._print_msg_comment())
 
         dl_dir = join(tempdir, "dl")
-        archive_path = join(dl_dir, self.parsed_artifact_name)
 
         os.mkdir(dl_dir)
 
@@ -941,6 +940,16 @@ class GitlabSubproject(Subproject):
 
         try:
             with urllib.request.urlopen(req) as response:
+                # NOTE: The response filename (i.e. the one returned in the Content-Disposition
+                # header) is used to allow extraction of the entire artifacts zip from a CI pipeline
+                # without having to change the self._extract() format detection logic (which is
+                # based on the file's extension).
+                #
+                # GitLab's API seemingly always returns "artifacts.zip" when requesting
+                # "/artifacts", whereas in all other cases it will just return the requested
+                # filename.
+                response_filename = response.headers.get_filename(self.parsed_artifact_name)
+                archive_path = join(dl_dir, response_filename)
                 sha1 = self._download_and_hash_with_progress(response, archive_path)
         except Exception as err:
             raise QuarkError(f"Error downloading '{req.full_url}'") from err
