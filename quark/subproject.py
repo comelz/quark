@@ -343,7 +343,7 @@ class GitSubproject(Subproject):
                 fork(['git', 'init'])
                 fork(['git', 'remote', 'add', 'origin', self.url.geturl()])
                 fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
-                fork(['git', 'checkout', self.ref, '--'])
+                fork(['git', '-c', 'advice.detachedHead=false', 'checkout', self.ref, '--'])
         else:
             # Regular case
             extra_opts = []
@@ -361,7 +361,7 @@ class GitSubproject(Subproject):
                     # Find out a sensible local branch name (needed for origin/HEAD)
                     local_branch = self.symbolic_full_name(self.ref).split('/origin/', 1)[1]
                     opts = [ local_branch ]
-                fork(['git', 'checkout'] + opts + ['--'])
+                fork(['git', '-c', 'advice.detachedHead=false', 'checkout'] + opts + ['--'])
 
     def update(self, clean=False, fix_remotes=False):
         def actualUpdate():
@@ -405,12 +405,12 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
                     try:
                         # Try to check it out; in the common case (nothing
                         # changed) this should be a no-op
-                        fork(['git', 'checkout', remote_commit, '--'])
+                        fork(['git', '-c', 'advice.detachedHead=false', 'checkout', remote_commit, '--'])
                     except CalledProcessError:
                         # Probably we don't have the commit; fetch it
                         fork(['git', 'fetch', '--depth', '1', 'origin', remote_commit])
                         # Try again
-                        fork(['git', 'checkout', remote_commit, '--'])
+                        fork(['git', '-c', 'advice.detachedHead=false', 'checkout', remote_commit, '--'])
                 else:
                     fork(['git', 'fetch'])
                     # If we want to go on a branch, try to find a local branch that tracks it
@@ -431,7 +431,7 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
                         if remote_fullref == local_fulltrackref:
                             try:
                                 # Checkout and fast-forward
-                                fork(['git', 'checkout', local_ref, '--'])
+                                fork(['git', '-c', 'advice.detachedHead=false', 'checkout', local_ref, '--'])
                                 fork(['git', 'merge', '--ff-only', self.ref, '--'])
                                 # Final sanity check
                                 if log_check_output(['git', 'rev-parse', self.ref, '--']) != log_check_output(['git', 'rev-parse', local_ref, '--']):
@@ -440,7 +440,7 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
                             except CalledProcessError:
                                 logger.warning("Couldn't fast-forward local branch, fallback to detached head mode...")
                     # General case: plain checkout of the origin ref (going in detached HEAD)
-                    fork(['git', 'checkout', self.ref, '--'])
+                    fork(['git', '-c', 'advice.detachedHead=false', 'checkout', self.ref, '--'])
 
         if not exists(self.directory):
             self.checkout()
