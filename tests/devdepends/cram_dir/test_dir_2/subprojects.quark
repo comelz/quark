@@ -1,0 +1,12 @@
+{
+  "depends": {
+    "test_dir_4": {
+      "url": "git+file://PH_TESTDIR4"
+    }
+  },
+  "devdepends": {
+    "test_dir_3": {
+      "url": "git+file://PH_TESTDIR3"
+    }
+  }
+}
