@@ -814,12 +814,13 @@ class GitlabSubproject(Subproject):
         # Try private token variables, in order of importance. GITLAB_PRIVATE_TOKEN is commonly used
         # by python-gitlab's "gitlab" CLI tool, whereas GITLAB_TOKEN is used by GitLab's "glab" CLI
         # tool.
-        for var in ("QUARK_GITLAB_PRIVATE_TOKEN", "GITLAB_PRIVATE_TOKEN", "GITLAB_TOKEN"):
+        env_vars = ("QUARK_GITLAB_PRIVATE_TOKEN", "GITLAB_PRIVATE_TOKEN", "GITLAB_TOKEN")
+        for var in env_vars:
             if var in os.environ:
                 self.gitlab_token = os.environ[var]
                 return
 
-        raise QuarkError("Missing authentication token.")
+        raise QuarkError("Missing authentication token. Please set one of the following environment variables: %s" % (", ".join(env_vars)))
 
     def _parse_url(self, url):
         fragments = Subproject._parse_fragment(url) if url.fragment else {}
