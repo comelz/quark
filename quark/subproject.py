@@ -750,7 +750,7 @@ class GitlabSubproject(Subproject):
         }  # type: dict[str, None | str]
 
         self._gitlab_setup(url)
-        self._parse_url(url)
+        self._parse_url(self._expand_url_templates(url))
 
     def update(self, clean=False, fix_remotes=False):
         assert self.directory  # Make Pyright happy
@@ -859,6 +859,18 @@ The keyring package is available:
 """ % (", ".join(env_vars))
 
         raise QuarkError(msg)
+
+    def _expand_url_templates(self, url):
+        # Very simple template expansion from "{{ key }}" -> value
+        mapping = {
+            "platform": sys.platform,
+        }
+
+        u = urllib.parse.urlunparse(url)
+        for k, v in mapping.items():
+            u = u.replace("{{ " + k + " }}", v)
+
+        return urllib.parse.urlparse(u)
 
     def _parse_url(self, url):
         fragments = Subproject._parse_fragment(url) if url.fragment else {}

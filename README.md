@@ -178,6 +178,8 @@ with the `read_api` scope.
 
     # Download a single binary
     gitlab+package://gitlab.example.com/widgets-inc/widgets/widgets-demo/1.0.0/demo.exe
+    # Download a single (platform-specific) binary
+    gitlab+package://gitlab.example.com/widgets-inc/widgets/widgets-demo/1.0.0/demo-{{ platform }}.exe
     # Download a single binary, with expected SHA1 hash
     gitlab+package://gitlab.example.com/widgets-inc/widgets/widgets-demo/1.0.0/demo.exe#sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
     # Extract an archive (.tar.gz, .tar.bz2, .tar.xz, and .zip are supported)
@@ -188,6 +190,10 @@ with the `read_api` scope.
 The URL format is:
 
     gitlab+package://<gitlab host>/<project path>/<package name>/<package version>/<package asset to download>
+
+A primitive form of template expansion is supported anywhere in the URL:
+
+- `{{ platform }}` is expanded to the value of Python's `sys.platform`.
 
 #### GitLab Artifacts from CI pipelines ####
 
@@ -205,6 +211,8 @@ Download a single artifact from the artifacts archive:
     gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.tar.gz#ref=1.0.0&job=build-win32&extract=true&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
     # Download an artifact from the given job id
     gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.dll#job=1234
+    # Download a platform-specific artifact from the given job id
+    gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets-{{ platform }}.dll#job=1234
     # Download an artifact from the given job id, with expected SHA1 hash
     gitlab+ci://gitlab.example.com/widgets-inc/widgets/artifacts/path/to/file/in/artifacts/widgets.dll#job=1234&sha1=da39a3ee5e6b4b0d3255bfef95601890afd80709
     # Extract an archive from the given job id, with expected SHA1 hash of the archive itself
@@ -228,6 +236,10 @@ Download the entire artifacts archive:
 The URL format is:
 
     gitlab+ci://<gitlab host>/<project path>/artifacts/<artifact's path>
+
+A primitive form of template expansion is supported anywhere in the URL:
+
+- `{{ platform }}` is expanded to the value of Python's `sys.platform`.
 
 ### Options and optional dependencies ###
 
