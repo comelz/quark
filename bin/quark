@@ -2,11 +2,11 @@
 
 import os
 import sys
-import importlib
+
 bin_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(bin_dir, ".."))
-from quark import checkout, update, freeze, status
-from quark.entrypoints import commands, aliases
+from quark.entrypoints import aliases, commands  # noqa: E402
+
 
 def main():
     argc = len(sys.argv)
@@ -19,8 +19,9 @@ def main():
     else:
         print("Available commands:")
         for cmd, _ in sorted(commands):
-            print(" %s" % cmd)
+            print("  %s" % cmd)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
