@@ -1,25 +1,32 @@
-import logging
-import json
-import os
-from os.path import exists, join, isdir
-from subprocess import PIPE, Popen, CalledProcessError
-from urllib.parse import urlparse
-from quark.utils import cmake_escape
 import hashlib
 import itertools
+import json
+import logging
+import os
 import shutil
 import stat
 import sys
-import tempfile
 import tarfile
-import zipfile
+import tempfile
 import urllib.parse
 import urllib.request
-
 import xml.etree.ElementTree as ElementTree
+import zipfile
+from os.path import exists, isdir, join
+from subprocess import PIPE, CalledProcessError, Popen
+from urllib.parse import urlparse
 
-from quark.utils import DirectoryContext as cd, fork, log_check_output, print_msg
-from quark.utils import freeze_file, dependency_file, mkdir, load_conf
+from quark.utils import DirectoryContext as cd
+from quark.utils import (
+    cmake_escape,
+    dependency_file,
+    fork,
+    freeze_file,
+    load_conf,
+    log_check_output,
+    mkdir,
+    print_msg,
+)
 
 logger = logging.getLogger(__name__)
 
