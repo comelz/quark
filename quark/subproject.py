@@ -2,8 +2,7 @@ import logging
 import json
 import os
 from os.path import exists, join, isdir
-from shutil import rmtree
-from subprocess import call, PIPE, Popen, CalledProcessError, run
+from subprocess import PIPE, Popen, CalledProcessError
 from urllib.parse import urlparse
 from quark.utils import cmake_escape
 import hashlib
