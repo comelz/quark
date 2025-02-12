@@ -677,7 +677,6 @@ class SvnSubproject(Subproject):
         return ret
 
     def mirror(self, dst, quick = False):
-        import shutil
         src = self.directory
 
         os.chdir(src)
