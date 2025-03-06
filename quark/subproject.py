@@ -13,7 +13,7 @@ import urllib.request
 import xml.etree.ElementTree as ElementTree
 import zipfile
 from os.path import exists, isdir, join
-from subprocess import PIPE, CalledProcessError, Popen
+from subprocess import PIPE, CalledProcessError, Popen, check_output
 from urllib.parse import urlparse
 
 from quark.utils import DirectoryContext as cd
@@ -826,7 +826,36 @@ class GitlabSubproject(Subproject):
                 self.gitlab_token = os.environ[var]
                 return
 
-        raise QuarkError("Missing authentication token. Please set one of the following environment variables: %s" % (", ".join(env_vars)))
+        # Try to retrieve the token from the system's keyring if the "keyring" package
+        # is available. The CLI is used instead of the "keyring" module to avoid
+        # PYTHONPATH, virtualenv, and import issues that could cause unexpected
+        # failures.
+        if shutil.which("keyring"):
+            try:
+                self.gitlab_token = check_output(["keyring", "get", "comelz/quark", "gitlab-token"]).decode("utf-8").strip()  # fmt: skip
+                return
+            except CalledProcessError:
+                pass
+
+        msg = """
+Missing GitLab authentication token.
+
+Please set one of the following environment variables: %s.
+
+You can also install the Python "keyring" package and store the token inside the
+system's keyring like so:
+
+    keyring set comelz/quark gitlab-token
+
+Then enter the token when prompted.
+
+The keyring package is available:
+- On Debian / Ubuntu: python3-keyring
+- On macOS: brew install keyring
+- On PyPI: https://pypi.org/project/keyring/
+""" % (", ".join(env_vars))
+
+        raise QuarkError(msg)
 
     def _parse_url(self, url):
         fragments = Subproject._parse_fragment(url) if url.fragment else {}
