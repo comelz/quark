@@ -816,9 +816,10 @@ class GitlabSubproject(Subproject):
     def _gitlab_setup(self, url):
         self.gitlab_url = "https://" + url.netloc  # Enforce HTTPS for now.
 
-        # Try private token variables, in order of importance. GITLAB_PRIVATE_TOKEN is commonly used
-        # by python-gitlab's "gitlab" CLI tool, whereas GITLAB_TOKEN is used by GitLab's "glab" CLI
-        # tool. In any case, you should prefer setting the Quark-specific QUARK_GITLAB_PRIVATE_TOKEN first.
+        # Try private token variables, in order of importance. GITLAB_PRIVATE_TOKEN is
+        # commonly used by python-gitlab's "gitlab" CLI tool, whereas GITLAB_TOKEN is
+        # used by GitLab's "glab" CLI tool. In any case, you should prefer setting the
+        # Quark-specific QUARK_GITLAB_PRIVATE_TOKEN first.
         env_vars = ("QUARK_GITLAB_PRIVATE_TOKEN", "GITLAB_PRIVATE_TOKEN", "GITLAB_TOKEN")  # fmt: skip
         for var in env_vars:
             if var in os.environ:
