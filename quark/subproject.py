@@ -1,26 +1,32 @@
-import logging
-import json
-import os
-from os.path import exists, join, isdir
-from shutil import rmtree
-from subprocess import call, PIPE, Popen, CalledProcessError, run
-from urllib.parse import urlparse
-from quark.utils import cmake_escape
 import hashlib
 import itertools
+import json
+import logging
+import os
 import shutil
 import stat
 import sys
-import tempfile
 import tarfile
-import zipfile
+import tempfile
 import urllib.parse
 import urllib.request
-
 import xml.etree.ElementTree as ElementTree
+import zipfile
+from os.path import exists, isdir, join
+from subprocess import PIPE, CalledProcessError, Popen, check_output
+from urllib.parse import urlparse
 
-from quark.utils import DirectoryContext as cd, fork, log_check_output, print_msg
-from quark.utils import freeze_file, dependency_file, mkdir, load_conf
+from quark.utils import DirectoryContext as cd
+from quark.utils import (
+    cmake_escape,
+    dependency_file,
+    fork,
+    freeze_file,
+    load_conf,
+    log_check_output,
+    mkdir,
+    print_msg,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -677,7 +683,6 @@ class SvnSubproject(Subproject):
         return ret
 
     def mirror(self, dst, quick = False):
-        import shutil
         src = self.directory
 
         os.chdir(src)
@@ -811,16 +816,46 @@ class GitlabSubproject(Subproject):
     def _gitlab_setup(self, url):
         self.gitlab_url = "https://" + url.netloc  # Enforce HTTPS for now.
 
-        # Try private token variables, in order of importance. GITLAB_PRIVATE_TOKEN is commonly used
-        # by python-gitlab's "gitlab" CLI tool, whereas GITLAB_TOKEN is used by GitLab's "glab" CLI
-        # tool.
-        env_vars = ("QUARK_GITLAB_PRIVATE_TOKEN", "GITLAB_PRIVATE_TOKEN", "GITLAB_TOKEN")
+        # Try private token variables, in order of importance. GITLAB_PRIVATE_TOKEN is
+        # commonly used by python-gitlab's "gitlab" CLI tool, whereas GITLAB_TOKEN is
+        # used by GitLab's "glab" CLI tool. In any case, you should prefer setting the
+        # Quark-specific QUARK_GITLAB_PRIVATE_TOKEN first.
+        env_vars = ("QUARK_GITLAB_PRIVATE_TOKEN", "GITLAB_PRIVATE_TOKEN", "GITLAB_TOKEN")  # fmt: skip
         for var in env_vars:
             if var in os.environ:
                 self.gitlab_token = os.environ[var]
                 return
 
-        raise QuarkError("Missing authentication token. Please set one of the following environment variables: %s" % (", ".join(env_vars)))
+        # Try to retrieve the token from the system's keyring if the "keyring" package
+        # is available. The CLI is used instead of the "keyring" module to avoid
+        # PYTHONPATH, virtualenv, and import issues that could cause unexpected
+        # failures.
+        if shutil.which("keyring"):
+            try:
+                self.gitlab_token = check_output(["keyring", "get", "comelz/quark", "gitlab-token"]).decode("utf-8").strip()  # fmt: skip
+                return
+            except CalledProcessError:
+                pass
+
+        msg = """
+Missing GitLab authentication token.
+
+Please set one of the following environment variables: %s.
+
+You can also install the Python "keyring" package and store the token inside the
+system's keyring like so:
+
+    keyring set comelz/quark gitlab-token
+
+Then enter the token when prompted.
+
+The keyring package is available:
+- On Debian / Ubuntu: python3-keyring
+- On macOS: brew install keyring
+- On PyPI: https://pypi.org/project/keyring/
+""" % (", ".join(env_vars))
+
+        raise QuarkError(msg)
 
     def _parse_url(self, url):
         fragments = Subproject._parse_fragment(url) if url.fragment else {}
