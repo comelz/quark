@@ -1,3 +1,4 @@
 *.pyc
+*.t.err
 quark.egg-info/*
 __pycache__/
