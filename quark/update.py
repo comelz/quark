@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from .subproject import generate_cmake_script, Subproject, url_from_directory
 from .utils import parse_option
-from os import getcwd
+from os import getcwd, path
 from .utils import catalog_urls_overrides
 
 def run():
@@ -30,7 +30,7 @@ def run():
             help="If the remote of a git subproject doesn't match what we expect, force it " +
             "to the expected value instead of giving up; useful if a repo moved.")
     optlist = parser.parse_args()
-    source_dir = optlist.source_directory or getcwd()
+    source_dir = path.abspath(optlist.source_directory or getcwd())
     options = {}
     if optlist.options:
         for option in optlist.options:
