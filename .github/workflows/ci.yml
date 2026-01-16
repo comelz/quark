@@ -10,6 +10,8 @@ jobs:
           - "3.8"  # Found on Ubuntu 18.04 / 20.04
           - "3.10" # Found on Ubuntu 22.04
           - "3.12" # Found on Ubuntu 24.04
+          - "3.13" # Found on Ubuntu 26.04
+          - "3.14" # Found on Debian Experimental
     container:
       image: python:${{ matrix.python-version }}
     steps:
