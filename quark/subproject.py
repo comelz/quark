@@ -230,12 +230,14 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
 
                 def do_add_module(name, depobject):
                     external_project = depobject.get('external_project', False)
+                    quark_run_paths = depobject.get('quark_run_paths', ['bin'])
                     add_module(current_module, name,
                                freeze_dict.get(name, depobject.get('url', None)),
                                depobject.get('options', {}),
                                depobject,
                                exclude_from_cmake=depobject.get('exclude_from_cmake', external_project),
-                               external_project=external_project
+                               external_project=external_project,
+                               quark_run_paths=quark_run_paths
                                )
 
                 for name, depobject in conf.get('depends', {}).items():
@@ -254,7 +256,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         root.set_local_ignores(subprojects_dir, modules.values())
         return root, modules
 
-    def __init__(self, name=None, directory=None, options=None, conf={}, exclude_from_cmake=False, external_project=False, toplevel=False):
+    def __init__(self, name=None, directory=None, options=None, conf={}, exclude_from_cmake=False, external_project=False, toplevel=False, quark_run_paths=list()):
         self.conf = conf
         self.parents = set()
         self.children = set()
@@ -264,6 +266,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         self.exclude_from_cmake = exclude_from_cmake
         self.external_project = external_project
         self.toplevel = toplevel
+        self.quark_run_paths = quark_run_paths
 
     def __hash__(self):
         return self.name.__hash__()
