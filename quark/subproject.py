@@ -737,6 +737,15 @@ class GitlabSubproject(Subproject):
         ".o..",
     ])
 
+    def get_env_variables(self, toplevel):
+        return {
+            **super().get_env_variables(toplevel=toplevel),
+            **{
+                "version_control": "gitlab"
+            },
+            **{"quark_gitlab_" + k: str(v) for k, v in self.stamp.items() if v is not None}
+        }
+
     def __init__(self, name, url, directory, options, conf={}, **kwargs):
         super().__init__(name, directory, options, conf, **kwargs)
 
