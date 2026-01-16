@@ -254,7 +254,7 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
         root.set_local_ignores(subprojects_dir, modules.values())
         return root, modules
 
-    def __init__(self, name=None, directory=None, options=None, conf = {}, exclude_from_cmake=False, external_project=False, toplevel = False):
+    def __init__(self, name=None, directory=None, options=None, conf={}, exclude_from_cmake=False, external_project=False, toplevel=False):
         self.conf = conf
         self.parents = set()
         self.children = set()
