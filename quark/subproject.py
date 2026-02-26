@@ -115,7 +115,12 @@ class Subproject:
         clobber_backup_path = os.path.join(source_dir_rp, 'clobbered.quark')
         if clobber and os.path.exists(clobber_backup_path):
             raise QuarkError('clobbered.quark already exists; remove it to proceed')
-        root = Subproject.create("root", url, source_dir, {}, {}, toplevel = True)
+        root_url = url
+        try:
+            root_url = url_from_directory(source_dir)
+        except QuarkError:
+            pass
+        root = Subproject.create("root", root_url, source_dir, {}, {}, toplevel = True)
         if url and update:
             root.checkout()
         conf = load_conf(source_dir)

@@ -33,6 +33,8 @@
 
 # Test foreach's output with a simple echo of its env variables
   $ $_QUARK foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
+  .* (re)
+  .* (re)
   Entering test_dir_2
   test_dir_2 src/test_dir_2 src/test_dir_2 .+ /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
   Entering test_dir_3
@@ -42,6 +44,8 @@
 
 # Test foreach with a shell script
   $ $_QUARK foreach $TESTDIR/foreach.sh
+  .* (re)
+  .* (re)
   Entering test_dir_2
   name: test_dir_2
   sm_path: src/test_dir_2
@@ -76,6 +80,8 @@
 # The check for the hashes is done by the regex '[a-fA-F0-9]{40}'
 # (Match exactly 40 times any word character)
   $ $_QUARK foreach 'echo $name $sm_path $displaypath $sha1 $toplevel $rev $version_control'
+  .* (re)
+  .* (re)
   Entering test_dir_2
   test_dir_2 src/test_dir_2 src/test_dir_2 [a-fA-F0-9]{40} /tmp/cramtests-.*/foreach.t/checkout/test_dir_1 git (re)
   Entering test_dir_3
