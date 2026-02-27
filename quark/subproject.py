@@ -324,7 +324,14 @@ class GitSubproject(Subproject):
                 self.ref_type = 'tag'
             elif 'branch' in fragment:
                 self.ref = 'origin/%s' % fragment['branch']
-        self.remote = url._replace(fragment='')._replace(scheme=url.scheme.replace('git+', '')).geturl()
+        if url.scheme == 'quarkunknown':
+            # unpack opaque, non-URL-style remotes, such as scp-style
+            # (user@host.xy:path/repo.git) or local paths (see
+            # url_from_directory)
+            self.remote = urllib.parse.unquote(url.path)[1:]
+        else:
+            # "regular" URLs (drop git+ prefix and fragment)
+            self.remote = url._replace(fragment='')._replace(scheme=url.scheme.replace('git+', '')).geturl()
 
     def same_checkout(self, other):
         if isinstance(other, GitSubproject) and (self.remote, self.ref, self.conf.get("shallow", False)) == (other.remote, other.ref, other.conf.get("shallow", False)):
@@ -495,6 +502,21 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
             except CalledProcessError:
                 raise QuarkError("Cannot obtain remote")
             commit = log_check_output(['git', 'log', '-1', '--format=%H'], universal_newlines=True)[:-1]
+        parsed = None
+        try:
+            parsed = urllib.parse.urlparse(origin)
+        except:
+            # shouldn't really happen, urlparse shoves everything it doesn't
+            # understand in path
+            pass
+        if parsed is None or parsed.scheme == '':
+            # This is a non-URL-style remote, such as an scp-style
+            # (user@host.xy:path/repo.git) or local path.
+            # To keep up the quark fiction about every subproject being
+            # representable by an URL, we shove the string opaquely in the path
+            # part of a fake URL, that is recognized by __init__ above.
+            origin = 'quarkunknown:///' + urllib.parse.quote(origin)
+
         ret = 'git+' + origin if not origin.startswith('git+') else origin
         if include_commit:
             ret += '#commit=%s' % (commit,)
