@@ -495,7 +495,7 @@ Please either remove the local clone, or fix its remote.""" % (self.directory, c
             except CalledProcessError:
                 raise QuarkError("Cannot obtain remote")
             commit = log_check_output(['git', 'log', '-1', '--format=%H'], universal_newlines=True)[:-1]
-        ret = 'git+%s' % (origin,)
+        ret = 'git+' + origin if not origin.startswith('git+') else origin
         if include_commit:
             ret += '#commit=%s' % (commit,)
         return ret
