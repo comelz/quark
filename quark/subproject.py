@@ -324,10 +324,10 @@ class GitSubproject(Subproject):
                 self.ref_type = 'tag'
             elif 'branch' in fragment:
                 self.ref = 'origin/%s' % fragment['branch']
-        self.url = url._replace(fragment='')._replace(scheme=url.scheme.replace('git+', ''))
+        self.remote = url._replace(fragment='')._replace(scheme=url.scheme.replace('git+', '')).geturl()
 
     def same_checkout(self, other):
-        if isinstance(other, GitSubproject) and (self.url, self.ref, self.conf.get("shallow", False)) == (other.url, other.ref, other.conf.get("shallow", False)):
+        if isinstance(other, GitSubproject) and (self.remote, self.ref, self.conf.get("shallow", False)) == (other.remote, other.ref, other.conf.get("shallow", False)):
             return True
         return False
 
@@ -347,7 +347,7 @@ class GitSubproject(Subproject):
             os.mkdir(self.directory)
             with cd(self.directory):
                 fork(['git', 'init'])
-                fork(['git', 'remote', 'add', 'origin', self.url.geturl()])
+                fork(['git', 'remote', 'add', 'origin', self.remote])
                 fork(['git', 'fetch', '--depth', '1', 'origin', self.noremote_ref()])
                 fork(['git', '-c', 'advice.detachedHead=false', 'checkout', self.ref, '--'])
         else:
@@ -359,7 +359,7 @@ class GitSubproject(Subproject):
             # git clone -n + git checkout would suffice
             if shallow and self.ref_type != 'commit' and self.ref != 'origin/HEAD':
                 extra_opts += ['-b', self.noremote_ref()]
-            fork(['git', 'clone', '-n'] + extra_opts + ['--', self.url.geturl(), self.directory])
+            fork(['git', 'clone', '-n'] + extra_opts + ['--', self.remote, self.directory])
             with cd(self.directory):
                 opts = [self.ref]
                 # If it's a branch, create a remote-tracking one
@@ -376,10 +376,10 @@ class GitSubproject(Subproject):
                     current_origin = log_check_output(['git', 'config', '--get', 'remote.origin.url']).strip().decode('utf-8')
                 except CalledProcessError:
                     current_origin = None
-                if current_origin != self.url.geturl():
+                if current_origin != self.remote:
                     if fix_remotes:
-                        logger.info("Fixing incorrect remote in %s directory (%s -> %s)" % (self.directory, current_origin, self.url.geturl()))
-                        fork(['git', 'remote', 'set-url', 'origin', self.url.geturl()])
+                        logger.info("Fixing incorrect remote in %s directory (%s -> %s)" % (self.directory, current_origin, self.remote))
+                        fork(['git', 'remote', 'set-url', 'origin', self.remote])
                     else:
                         raise QuarkError("""
 
@@ -387,7 +387,7 @@ Directory '%s' is a git repository,
 but its remote 'origin' (%r)
 does not match what we expect (%r).
 
-Please either remove the local clone, or fix its remote.""" % (self.directory, current_origin, self.url.geturl()))
+Please either remove the local clone, or fix its remote.""" % (self.directory, current_origin, self.remote))
                 if self.conf.get("shallow", False):
                     # git fetch with shallow clones isn't very smart, and
                     # re-fetches stuff that we already have; try to avoid this
