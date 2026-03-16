@@ -1,0 +1,7 @@
+{
+  "devdepends": {
+    "test_dir_2": {
+      "url": "git+file://PH_TESTDIR2"
+    }
+  }
+}

@@ -251,6 +251,9 @@ main project abspath: %s""" % (name, uri, source_dir, target_dir_rp, source_dir_
                         if value == optobject['value']:
                             for name, depobject in optobject['depends'].items():
                                 do_add_module(name, depobject)
+                if current_module.toplevel:
+                    for name, depobject in conf.get('devdepends', {}).items():
+                        do_add_module(name, depobject)
         root.set_local_ignores(subprojects_dir, modules.values())
         return root, modules
 
