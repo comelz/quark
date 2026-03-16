@@ -1,4 +1,4 @@
-from quark import checkout, freeze, status, update, mirror, foreach, query
+from quark import checkout, freeze, status, update, mirror, foreach, query, run
 
 commands = [
     ('checkout', checkout.run),
@@ -7,7 +7,8 @@ commands = [
     ('update', update.run),
     ('mirror', mirror.run),
     ('foreach', foreach.run),
-    ('query', query.run)
+    ('query', query.run),
+    ('run', run.run)
 ]
 
 aliases = [('co', 'checkout'),
@@ -15,7 +16,8 @@ aliases = [('co', 'checkout'),
            ('fz', 'freeze'),
            ('st', 'status'),
            ('fe', 'foreach'),
-           ('q', 'query')]
+           ('q', 'query'),
+           ('r', 'run')]
 
 def mk_setup_entry_points():
     res = ["quark=quark.cli:main"]
